@@ -3,624 +3,405 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Whiteboard</title>
+  <title>Neura — Think Freely</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #f5f0e8;
-      --paper: #fdfaf4;
-      --ink: #1a1a2e;
-      --muted: #8a8070;
-      --accent: #e85d4a;
-      --accent2: #4a90d9;
-      --accent3: #52b788;
-      --accent4: #f4a261;
-      --toolbar-bg: #1a1a2e;
-      --toolbar-border: #2d2d4e;
-      --shadow: 0 8px 32px rgba(26,26,46,0.18);
-      --radius: 14px;
+      --green: #0d5c3a;
+      --green-mid: #1a7a4e;
+      --green-light: #22a86a;
+      --green-pale: #d4edd8;
+      --green-wash: #eef7f0;
+      --white: #ffffff;
+      --off-white: #f7faf8;
+      --ink: #0a1f14;
+      --muted: #4a6858;
     }
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--white); color: var(--ink); overflow-x: hidden; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 20px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,0.85); backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(13,92,58,0.08);
+    }
+    .nav-logo {
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px;
+      color: var(--green); text-decoration: none; display: flex; align-items: center; gap: 7px;
+    }
+    .nav-dot {
+      width: 8px; height: 8px; background: var(--green-light); border-radius: 50%;
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--green); }
+
+    .nav-cta {
+      background: var(--green); color: #fff; border: none;
+      padding: 10px 22px; border-radius: 100px;
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+      cursor: pointer; text-decoration: none; transition: all 0.2s;
+    }
+    .nav-cta:hover { background: var(--green-mid); transform: translateY(-1px); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 120px 24px 80px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(13,92,58,0.055) 1px,transparent 1px), linear-gradient(90deg,rgba(13,92,58,0.055) 1px,transparent 1px);
+      background-size: 52px 52px;
+      mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 30%, transparent 100%);
+      animation: gridDrift 20s ease-in-out infinite alternate;
+    }
+    @keyframes gridDrift { from{background-position:0 0} to{background-position:26px 26px} }
+
+    .blob { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; animation: blobFloat 8s ease-in-out infinite alternate; }
+    .blob-1 { width:420px;height:420px; background:rgba(34,168,106,0.13); top:-60px;right:-80px; }
+    .blob-2 { width:300px;height:300px; background:rgba(13,92,58,0.09); bottom:80px;left:-60px; animation-delay:-3s; }
+    .blob-3 { width:200px;height:200px; background:rgba(34,168,106,0.08); top:40%;left:20%; animation-delay:-5s; }
+    @keyframes blobFloat { from{transform:translate(0,0) scale(1)} to{transform:translate(30px,-20px) scale(1.06)} }
+
+    .hero-content { position: relative; z-index: 2; text-align: center; max-width: 760px; }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--green-wash); border: 1px solid var(--green-pale);
+      color: var(--green); font-size: 12.5px; font-weight: 500;
+      padding: 6px 14px; border-radius: 100px; margin-bottom: 32px;
+      animation: fadeUp 0.7s ease both;
+    }
+    .hero-badge::before { content:''; width:6px;height:6px; background:var(--green-light); border-radius:50%; animation:pulse 2s ease infinite; }
+
+    h1 {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(52px,8vw,96px);
+      font-weight: 400; line-height: 1.0; letter-spacing: -2px;
+      color: var(--ink); margin-bottom: 24px;
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+    h1 em { font-style: italic; color: var(--green); }
+
+    .hero-sub {
+      font-size: 18px; font-weight: 300; color: var(--muted);
+      line-height: 1.65; max-width: 500px; margin: 0 auto 48px;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+
+    .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; animation: fadeUp 0.7s 0.3s ease both; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--green); color: #fff; text-decoration: none;
+      padding: 16px 32px; border-radius: 100px;
+      font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+      transition: all 0.2s; box-shadow: 0 4px 24px rgba(13,92,58,0.25);
+    }
+    .btn-primary:hover { background:var(--green-mid); transform:translateY(-2px); box-shadow:0 8px 32px rgba(13,92,58,0.3); }
+    .btn-primary svg { transition:transform 0.2s; }
+    .btn-primary:hover svg { transform:translateX(4px); }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; color: var(--green); text-decoration: none;
+      padding: 16px 28px; border-radius: 100px;
+      font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+      border: 1.5px solid var(--green-pale); transition: all 0.2s;
+    }
+    .btn-secondary:hover { background:var(--green-wash); border-color:var(--green-light); transform:translateY(-2px); }
+
+    /* App preview mockup */
+    .hero-preview { position: relative; z-index: 2; margin-top: 72px; animation: fadeUp 0.8s 0.4s ease both; }
+    .preview-frame {
+      width: min(820px, 90vw); height: min(460px, 50vw);
+      background: var(--off-white); border-radius: 20px;
+      border: 1.5px solid rgba(13,92,58,0.12);
+      box-shadow: 0 2px 0 1px rgba(13,92,58,0.06), 0 24px 80px rgba(13,92,58,0.12);
       overflow: hidden;
-      height: 100vh;
-      width: 100vw;
-      cursor: crosshair;
     }
+    .preview-topbar {
+      height: 40px; background: #fff;
+      border-bottom: 1px solid rgba(13,92,58,0.08);
+      display: flex; align-items: center; padding: 0 16px; gap: 8px;
+    }
+    .dot { width:10px;height:10px;border-radius:50%; }
+    .dot-r{background:#ff5f56} .dot-y{background:#ffbd2e} .dot-g{background:#27c93f}
+    .preview-url {
+      flex:1; background:var(--green-wash); border-radius:6px; height:22px; margin:0 12px;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .preview-url span { font-size:10px;color:var(--muted);font-family:monospace; }
+    .preview-canvas { width:100%;height:calc(100% - 40px); }
+    .preview-canvas svg { width:100%;height:100%; }
 
-    /* Canvas */
-    #canvas-container {
-      position: fixed; inset: 0;
-      background:
-        radial-gradient(circle at 20% 20%, rgba(232,93,74,0.04) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(74,144,217,0.04) 0%, transparent 50%),
-        var(--bg);
-    }
+    /* FEATURES */
+    .features { padding: 120px 48px; background: var(--off-white); }
+    .section-label { font-family:'Syne',sans-serif; font-size:11px;font-weight:700;letter-spacing:3px; text-transform:uppercase; color:var(--green-light); margin-bottom:16px; }
+    .section-title { font-family:'Instrument Serif',serif; font-size:clamp(36px,5vw,58px); font-weight:400; line-height:1.1; letter-spacing:-1px; color:var(--ink); max-width:520px; margin-bottom:64px; }
 
-    #main-canvas {
-      position: absolute;
-      top: 0; left: 0;
-      touch-action: none;
-    }
+    .features-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:24px; max-width:1100px; margin:0 auto; }
 
-    /* Toolbar */
-    #toolbar {
-      position: fixed;
-      bottom: 28px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--toolbar-bg);
-      border: 1px solid var(--toolbar-border);
-      border-radius: 20px;
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: var(--shadow), 0 0 0 1px rgba(255,255,255,0.05) inset;
-      z-index: 100;
-      backdrop-filter: blur(12px);
-    }
+    .feature-card { background:var(--white); border:1px solid rgba(13,92,58,0.1); border-radius:16px; padding:32px; transition:all 0.25s; position:relative; overflow:hidden; }
+    .feature-card::before { content:''; position:absolute; top:0;left:0;right:0; height:3px; background:linear-gradient(90deg,var(--green-light),var(--green)); transform:scaleX(0); transform-origin:left; transition:transform 0.3s; }
+    .feature-card:hover { transform:translateY(-4px); box-shadow:0 16px 48px rgba(13,92,58,0.1); }
+    .feature-card:hover::before { transform:scaleX(1); }
+    .feature-icon { width:48px;height:48px; background:var(--green-wash); border-radius:12px; display:flex;align-items:center;justify-content:center; font-size:22px; margin-bottom:20px; }
+    .feature-title { font-family:'Syne',sans-serif; font-size:16px;font-weight:600; color:var(--ink); margin-bottom:10px; }
+    .feature-desc { font-size:14px;font-weight:300; color:var(--muted); line-height:1.7; }
 
-    .tool-sep {
-      width: 1px; height: 28px;
-      background: var(--toolbar-border);
-      margin: 0 4px;
-    }
+    /* TOOLS */
+    .tools-strip { padding:80px 48px; text-align:center; }
+    .tools-strip .section-label,.tools-strip .section-title { text-align:center; }
+    .tools-strip .section-title { margin:0 auto 48px; max-width:600px; }
+    .tools-strip .section-title em { font-style:italic; color:var(--green); }
+    .tools-row { display:flex;flex-wrap:wrap;gap:12px;justify-content:center; max-width:700px;margin:0 auto; }
+    .tool-pill { display:flex;align-items:center;gap:8px; background:var(--green-wash); border:1px solid var(--green-pale); color:var(--green); padding:10px 18px; border-radius:100px; font-size:13.5px;font-weight:500; transition:all 0.2s; }
+    .tool-pill:hover { background:var(--green);color:#fff; transform:translateY(-2px); box-shadow:0 6px 20px rgba(13,92,58,0.2); }
 
-    .tool-btn {
-      width: 38px; height: 38px;
-      border: none;
-      border-radius: 10px;
-      background: transparent;
-      color: #aaa;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 17px;
-      transition: all 0.15s ease;
-      position: relative;
-    }
-    .tool-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
-    .tool-btn.active {
-      background: rgba(255,255,255,0.12);
-      color: #fff;
-      box-shadow: 0 0 0 1.5px rgba(255,255,255,0.2);
-    }
-    .tool-btn .tooltip {
-      position: absolute;
-      bottom: calc(100% + 10px);
-      left: 50%;
-      transform: translateX(-50%);
-      background: #111;
-      color: #eee;
-      font-size: 11px;
-      padding: 4px 8px;
-      border-radius: 6px;
-      white-space: nowrap;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.1s;
-      font-family: 'DM Sans', sans-serif;
-    }
-    .tool-btn:hover .tooltip { opacity: 1; }
+    /* CTA */
+    .cta-section { padding:120px 48px; background:var(--green); text-align:center; position:relative; overflow:hidden; }
+    .cta-section::before { content:''; position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.05) 1px,transparent 1px); background-size:48px 48px; }
+    .cta-section h2 { font-family:'Instrument Serif',serif; font-size:clamp(40px,6vw,72px); font-weight:400; color:#fff; line-height:1.05; letter-spacing:-1.5px; margin-bottom:20px; position:relative;z-index:1; }
+    .cta-section h2 em { font-style:italic; color:rgba(255,255,255,0.65); }
+    .cta-section p { font-size:17px;font-weight:300; color:rgba(255,255,255,0.7); margin-bottom:44px; position:relative;z-index:1; }
+    .btn-white { display:inline-flex;align-items:center;gap:10px; background:#fff;color:var(--green); text-decoration:none; padding:18px 40px; border-radius:100px; font-family:'DM Sans',sans-serif; font-size:16px;font-weight:600; transition:all 0.2s; position:relative;z-index:1; box-shadow:0 4px 32px rgba(0,0,0,0.15); }
+    .btn-white:hover { transform:translateY(-3px) scale(1.02); box-shadow:0 12px 48px rgba(0,0,0,0.2); }
+    .btn-white svg { transition:transform 0.2s; }
+    .btn-white:hover svg { transform:translateX(5px); }
 
-    /* Color swatches */
-    .color-swatch {
-      width: 22px; height: 22px;
-      border-radius: 50%;
-      border: 2.5px solid transparent;
-      cursor: pointer;
-      transition: transform 0.15s, border-color 0.15s;
-      flex-shrink: 0;
-    }
-    .color-swatch:hover { transform: scale(1.2); }
-    .color-swatch.active { border-color: #fff; transform: scale(1.15); }
+    /* FOOTER */
+    footer { padding:32px 48px; background:var(--ink); display:flex;align-items:center;justify-content:space-between; flex-wrap:wrap;gap:16px; }
+    .footer-logo { font-family:'Syne',sans-serif; font-weight:800;font-size:18px; color:rgba(255,255,255,0.9); }
+    .footer-text { font-size:13px; color:rgba(255,255,255,0.35); }
 
-    /* Stroke size */
-    .size-track {
-      display: flex; align-items: center; gap: 5px;
-      padding: 0 6px;
-    }
-    .size-dot {
-      border-radius: 50%;
-      background: #888;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.15s;
-      flex-shrink: 0;
-    }
-    .size-dot:hover { background: #fff; transform: scale(1.2); }
-    .size-dot.active { background: #fff; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+    .reveal { opacity:0;transform:translateY(32px); transition:opacity 0.6s ease,transform 0.6s ease; }
+    .reveal.visible { opacity:1;transform:translateY(0); }
 
-    /* Top bar */
-    #topbar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 52px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      z-index: 99;
-      pointer-events: none;
+    @media(max-width:768px) {
+      nav{padding:16px 20px;} .nav-links{display:none;}
+      .features,.tools-strip,.cta-section{padding:80px 20px;}
+      footer{padding:24px 20px;}
     }
-
-    #logo {
-      font-family: 'Caveat', cursive;
-      font-size: 22px;
-      font-weight: 600;
-      color: var(--ink);
-      opacity: 0.55;
-      pointer-events: all;
-      user-select: none;
-      letter-spacing: -0.3px;
-    }
-
-    #top-actions {
-      display: flex; gap: 8px;
-      pointer-events: all;
-    }
-
-    .top-btn {
-      height: 32px;
-      padding: 0 14px;
-      border-radius: 10px;
-      border: 1.5px solid rgba(26,26,46,0.15);
-      background: rgba(253,250,244,0.85);
-      color: var(--ink);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 12.5px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-      backdrop-filter: blur(8px);
-    }
-    .top-btn:hover {
-      background: var(--ink);
-      color: var(--paper);
-      border-color: var(--ink);
-    }
-
-    /* Text input overlay */
-    #text-input {
-      position: fixed;
-      display: none;
-      font-family: 'Caveat', cursive;
-      font-size: 24px;
-      border: none;
-      outline: none;
-      background: transparent;
-      color: #1a1a2e;
-      min-width: 200px;
-      z-index: 200;
-      resize: none;
-      overflow: hidden;
-      caret-color: var(--accent);
-      line-height: 1.3;
-    }
-
-    /* Custom cursor indicator */
-    #cursor-ring {
-      position: fixed;
-      pointer-events: none;
-      border-radius: 50%;
-      border: 1.5px solid rgba(26,26,46,0.35);
-      transform: translate(-50%, -50%);
-      transition: width 0.1s, height 0.1s, border-color 0.1s;
-      z-index: 9999;
-    }
-
-    /* Snackbar */
-    #snack {
-      position: fixed;
-      bottom: 90px;
-      left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: var(--ink);
-      color: #fff;
-      font-size: 12.5px;
-      padding: 8px 16px;
-      border-radius: 10px;
-      opacity: 0;
-      transition: all 0.25s;
-      pointer-events: none;
-      z-index: 300;
-      font-family: 'DM Sans', sans-serif;
-    }
-    #snack.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    /* Eraser cursor */
-    body.eraser-mode { cursor: none; }
-    body.text-mode { cursor: text; }
-    body.pan-mode { cursor: grab; }
-    body.pan-mode:active { cursor: grabbing; }
   </style>
 </head>
 <body>
 
-<div id="canvas-container">
-  <canvas id="main-canvas"></canvas>
-</div>
+<nav>
+  <a href="#" class="nav-logo">Neura <div class="nav-dot"></div></a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#tools">Tools</a></li>
+    <li><a href="whiteboard.html">Open App</a></li>
+  </ul>
+  <a href="whiteboard.html" class="nav-cta">Launch Board →</a>
+</nav>
 
-<div id="cursor-ring" style="width:20px;height:20px;"></div>
+<section class="hero">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
 
-<div id="topbar">
-  <div id="logo">✏ whiteboard</div>
-  <div id="top-actions">
-    <button class="top-btn" id="btn-undo" title="Undo (Ctrl+Z)">↩ Undo</button>
-    <button class="top-btn" id="btn-redo" title="Redo (Ctrl+Y)">↪ Redo</button>
-    <button class="top-btn" id="btn-clear">🗑 Clear</button>
-    <button class="top-btn" id="btn-save">⬇ Save PNG</button>
+  <div class="hero-content">
+    <div class="hero-badge">Free forever · No sign-up required</div>
+    <h1>Think<br><em>freely.</em></h1>
+    <p class="hero-sub">A minimal, beautiful whiteboard for ideas that don't fit in boxes. Draw, write, sketch — zero friction, zero accounts.</p>
+    <div class="hero-actions">
+      <a href="whiteboard.html" class="btn-primary">
+        Open Whiteboard
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <a href="#features" class="btn-secondary">See features ↓</a>
+    </div>
   </div>
-</div>
 
-<div id="toolbar">
-  <!-- Tools -->
-  <button class="tool-btn active" id="tool-pen" data-tool="pen">
-    ✏️
-    <span class="tooltip">Pen (P)</span>
-  </button>
-  <button class="tool-btn" id="tool-highlighter" data-tool="highlighter">
-    🖊️
-    <span class="tooltip">Highlighter (H)</span>
-  </button>
-  <button class="tool-btn" id="tool-line" data-tool="line">
-    ╱
-    <span class="tooltip">Line (L)</span>
-  </button>
-  <button class="tool-btn" id="tool-arrow" data-tool="arrow">
-    →
-    <span class="tooltip">Arrow (A)</span>
-  </button>
-  <button class="tool-btn" id="tool-rect" data-tool="rect">
-    ▭
-    <span class="tooltip">Rectangle (R)</span>
-  </button>
-  <button class="tool-btn" id="tool-circle" data-tool="circle">
-    ○
-    <span class="tooltip">Circle (C)</span>
-  </button>
-  <button class="tool-btn" id="tool-text" data-tool="text">
-    T
-    <span class="tooltip">Text (T)</span>
-  </button>
-  <button class="tool-btn" id="tool-eraser" data-tool="eraser">
-    ◻
-    <span class="tooltip">Eraser (E)</span>
-  </button>
+  <div class="hero-preview">
+    <div class="preview-frame">
+      <div class="preview-topbar">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <div class="preview-url"><span>neura · whiteboard app</span></div>
+      </div>
+      <div class="preview-canvas">
+        <svg viewBox="0 0 820 420" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M40 0L0 0 0 40" fill="none" stroke="rgba(13,92,58,0.06)" stroke-width="1"/>
+            </pattern>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="2" orient="auto">
+              <path d="M0 0L6 2L0 4" stroke="#0d5c3a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            </marker>
+          </defs>
+          <rect width="820" height="420" fill="#f7faf8"/>
+          <rect width="820" height="420" fill="url(#grid)"/>
 
-  <div class="tool-sep"></div>
+          <!-- Freehand curve -->
+          <path d="M80 110 Q140 65 200 105 Q265 145 325 82" stroke="#0d5c3a" stroke-width="3" fill="none" stroke-linecap="round"
+            stroke-dasharray="320" stroke-dashoffset="320">
+            <animate attributeName="stroke-dashoffset" from="320" to="0" dur="1.2s" begin="0.5s" fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1"/>
+          </path>
 
-  <!-- Colors -->
-  <div class="color-swatch active" data-color="#1a1a2e" style="background:#1a1a2e;" title="Dark"></div>
-  <div class="color-swatch" data-color="#e85d4a" style="background:#e85d4a;" title="Red"></div>
-  <div class="color-swatch" data-color="#4a90d9" style="background:#4a90d9;" title="Blue"></div>
-  <div class="color-swatch" data-color="#52b788" style="background:#52b788;" title="Green"></div>
-  <div class="color-swatch" data-color="#f4a261" style="background:#f4a261;" title="Orange"></div>
-  <div class="color-swatch" data-color="#b48fff" style="background:#b48fff;" title="Purple"></div>
+          <!-- Heading line -->
+          <path d="M410 85L570 85" stroke="#22a86a" stroke-width="3" stroke-linecap="round"
+            stroke-dasharray="160" stroke-dashoffset="160">
+            <animate attributeName="stroke-dashoffset" from="160" to="0" dur="0.6s" begin="1s" fill="freeze"/>
+          </path>
 
-  <div class="tool-sep"></div>
+          <!-- Rectangle -->
+          <rect x="410" y="105" width="160" height="80" rx="10" stroke="#0d5c3a" stroke-width="2" fill="rgba(13,92,58,0.05)" opacity="0">
+            <animate attributeName="opacity" from="0" to="1" dur="0.4s" begin="1.4s" fill="freeze"/>
+          </rect>
 
-  <!-- Sizes -->
-  <div class="size-track">
-    <div class="size-dot active" data-size="3" style="width:8px;height:8px;"></div>
-    <div class="size-dot" data-size="6" style="width:12px;height:12px;"></div>
-    <div class="size-dot" data-size="12" style="width:18px;height:18px;"></div>
-    <div class="size-dot" data-size="24" style="width:24px;height:24px;"></div>
+          <!-- Arrow -->
+          <path d="M345 145L402 145" stroke="#0d5c3a" stroke-width="2" stroke-linecap="round" marker-end="url(#arr)"
+            stroke-dasharray="65" stroke-dashoffset="65">
+            <animate attributeName="stroke-dashoffset" from="65" to="0" dur="0.4s" begin="1.3s" fill="freeze"/>
+          </path>
+
+          <!-- Circle -->
+          <circle cx="625" cy="180" r="58" stroke="#22a86a" stroke-width="2.5" fill="rgba(34,168,106,0.06)"
+            stroke-dasharray="364" stroke-dashoffset="364">
+            <animate attributeName="stroke-dashoffset" from="364" to="0" dur="1s" begin="1.6s" fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1"/>
+          </circle>
+
+          <!-- Highlighter lines -->
+          <path d="M100 245L300 245" stroke="#0d5c3a" stroke-width="16" stroke-linecap="round" opacity="0.14"
+            stroke-dasharray="200" stroke-dashoffset="200">
+            <animate attributeName="stroke-dashoffset" from="200" to="0" dur="0.5s" begin="2s" fill="freeze"/>
+          </path>
+          <path d="M100 272L235 272" stroke="#0d5c3a" stroke-width="16" stroke-linecap="round" opacity="0.09"
+            stroke-dasharray="135" stroke-dashoffset="135">
+            <animate attributeName="stroke-dashoffset" from="135" to="0" dur="0.4s" begin="2.3s" fill="freeze"/>
+          </path>
+
+          <!-- Text -->
+          <text x="100" y="325" font-family="Georgia,serif" font-size="22" fill="#0d5c3a" font-style="italic" opacity="0">
+            Ideas flow here...
+            <animate attributeName="opacity" from="0" to="0.85" dur="0.6s" begin="2.7s" fill="freeze"/>
+          </text>
+
+          <!-- Toolbar -->
+          <rect x="240" y="374" width="340" height="36" rx="18" fill="#0a1f14" opacity="0">
+            <animate attributeName="opacity" from="0" to="0.93" dur="0.5s" begin="0.3s" fill="freeze"/>
+          </rect>
+          <circle cx="277" cy="392" r="7" fill="rgba(255,255,255,0.14)"/>
+          <circle cx="300" cy="392" r="5.5" fill="rgba(255,255,255,0.08)"/>
+          <circle cx="320" cy="392" r="5.5" fill="rgba(255,255,255,0.08)"/>
+          <circle cx="340" cy="392" r="5.5" fill="rgba(255,255,255,0.08)"/>
+          <rect x="358" y="385" width="1" height="14" fill="rgba(255,255,255,0.12)"/>
+          <circle cx="373" cy="392" r="5" fill="#0d5c3a"/>
+          <circle cx="389" cy="392" r="5" fill="#e85d4a"/>
+          <circle cx="405" cy="392" r="5" fill="#4a90d9"/>
+          <circle cx="421" cy="392" r="5" fill="#f4a261"/>
+          <rect x="438" y="385" width="1" height="14" fill="rgba(255,255,255,0.12)"/>
+          <circle cx="453" cy="392" r="4" fill="rgba(255,255,255,0.3)"/>
+          <circle cx="468" cy="392" r="6" fill="rgba(255,255,255,0.3)"/>
+          <circle cx="485" cy="392" r="8" fill="rgba(255,255,255,0.3)"/>
+          <circle cx="505" cy="392" r="10" fill="rgba(255,255,255,0.3)"/>
+          <circle cx="528" cy="392" r="12" fill="rgba(255,255,255,0.3)"/>
+        </svg>
+      </div>
+    </div>
   </div>
-</div>
+</section>
 
-<textarea id="text-input" rows="1" placeholder="Type here…"></textarea>
-<div id="snack"></div>
+<section class="features" id="features">
+  <div style="max-width:1100px;margin:0 auto;">
+    <p class="section-label reveal">Why Neura</p>
+    <h2 class="section-title reveal">Built for<br>pure thinking.</h2>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon">✏️</div>
+        <div class="feature-title">Natural Drawing</div>
+        <p class="feature-desc">Pen, highlighter, shapes — tools that feel like real instruments. Smooth curves, perfect lines, zero lag.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">Instant, No Login</div>
+        <p class="feature-desc">Open the board and start immediately. No accounts, no email, no onboarding. Just your canvas.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">↩️</div>
+        <div class="feature-title">60-Level Undo</div>
+        <p class="feature-desc">Think without fear — every mistake is reversible. Full undo/redo history at your fingertips.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">💾</div>
+        <div class="feature-title">Save as PNG</div>
+        <p class="feature-desc">Export your board as a clean, crisp PNG in one click. White background, ready to share or print.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">⌨️</div>
+        <div class="feature-title">Keyboard Driven</div>
+        <p class="feature-desc">Full keyboard shortcuts for every tool. Stay in flow — P pen, E eraser, T text, and more.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">📱</div>
+        <div class="feature-title">Touch Ready</div>
+        <p class="feature-desc">Works beautifully on tablets and phones. Draw with your finger, stylus, or mouse.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="tools-strip" id="tools">
+  <p class="section-label reveal">The Toolkit</p>
+  <h2 class="section-title reveal">Everything you need,<br><em>nothing you don't.</em></h2>
+  <div class="tools-row">
+    <div class="tool-pill reveal">✏️ Pen</div>
+    <div class="tool-pill reveal">🖊️ Highlighter</div>
+    <div class="tool-pill reveal">╱ Line</div>
+    <div class="tool-pill reveal">→ Arrow</div>
+    <div class="tool-pill reveal">▭ Rectangle</div>
+    <div class="tool-pill reveal">○ Circle</div>
+    <div class="tool-pill reveal">T Text</div>
+    <div class="tool-pill reveal">◻ Eraser</div>
+    <div class="tool-pill reveal">🎨 6 Colors</div>
+    <div class="tool-pill reveal">⬇ PNG Export</div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <h2>Your next idea is<br><em>one click away.</em></h2>
+  <p>Open a blank canvas. Start thinking.</p>
+  <a href="whiteboard.html" class="btn-white">
+    Open Neura Whiteboard
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </a>
+</section>
+
+<footer>
+  <div class="footer-logo">Neura</div>
+  <div class="footer-text">Built with ✏️ and green ink · Open source</div>
+</footer>
 
 <script>
-(() => {
-  const canvas = document.getElementById('main-canvas');
-  const ctx = canvas.getContext('2d');
-  const textInput = document.getElementById('text-input');
-  const cursorRing = document.getElementById('cursor-ring');
-  const snack = document.getElementById('snack');
-
-  // State
-  let tool = 'pen';
-  let color = '#1a1a2e';
-  let strokeSize = 3;
-  let isDrawing = false;
-  let startX, startY, lastX, lastY;
-  let history = [];
-  let redoStack = [];
-  let currentPath = null;
-  let textPos = null;
-
-  // Resize canvas
-  function resize() {
-    const snap = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    ctx.putImageData(snap, 0, 0);
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  // Save state for undo
-  function saveState() {
-    history.push(canvas.toDataURL());
-    if (history.length > 60) history.shift();
-    redoStack = [];
-  }
-
-  function undo() {
-    if (history.length === 0) return;
-    redoStack.push(canvas.toDataURL());
-    const img = new Image();
-    img.src = history.pop();
-    img.onload = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0); };
-    showSnack('Undone');
-  }
-
-  function redo() {
-    if (redoStack.length === 0) return;
-    history.push(canvas.toDataURL());
-    const img = new Image();
-    img.src = redoStack.pop();
-    img.onload = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0); };
-    showSnack('Redone');
-  }
-
-  function showSnack(msg) {
-    snack.textContent = msg;
-    snack.classList.add('show');
-    clearTimeout(snack._t);
-    snack._t = setTimeout(() => snack.classList.remove('show'), 1600);
-  }
-
-  // Cursor ring
-  document.addEventListener('mousemove', e => {
-    cursorRing.style.left = e.clientX + 'px';
-    cursorRing.style.top = e.clientY + 'px';
-    const s = tool === 'eraser' ? strokeSize * 2 + 8 : 20;
-    cursorRing.style.width = s + 'px';
-    cursorRing.style.height = s + 'px';
-    cursorRing.style.borderColor = tool === 'eraser' ? 'rgba(232,93,74,0.5)' : 'rgba(26,26,46,0.3)';
-  });
-
-  // Drawing helpers
-  function getPos(e) {
-    const r = canvas.getBoundingClientRect();
-    if (e.touches) {
-      return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top };
-    }
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
-  }
-
-  function setupCtx(alpha = 1) {
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.lineWidth = strokeSize;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.globalAlpha = alpha;
-    ctx.globalCompositeOperation = 'source-over';
-  }
-
-  function drawArrow(x1, y1, x2, y2) {
-    const angle = Math.atan2(y2 - y1, x2 - x1);
-    const headLen = Math.max(14, strokeSize * 4);
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x2, y2);
-    ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI/7), y2 - headLen * Math.sin(angle - Math.PI/7));
-    ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI/7), y2 - headLen * Math.sin(angle + Math.PI/7));
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  // Shape preview overlay
-  let previewSnap = null;
-
-  function onDown(e) {
-    if (e.button !== undefined && e.button !== 0) return;
-    if (tool === 'text') return;
-
-    const {x, y} = getPos(e);
-    isDrawing = true;
-    startX = x; startY = y;
-    lastX = x; lastY = y;
-
-    saveState();
-
-    if (tool === 'pen' || tool === 'highlighter') {
-      setupCtx(tool === 'highlighter' ? 0.35 : 1);
-      if (tool === 'highlighter') ctx.lineWidth = strokeSize * 3;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-    } else if (tool === 'eraser') {
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.lineWidth = strokeSize * 2;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-    } else {
-      previewSnap = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    }
-  }
-
-  function onMove(e) {
-    if (!isDrawing) return;
-    const {x, y} = getPos(e);
-
-    if (tool === 'pen' || tool === 'highlighter') {
-      setupCtx(tool === 'highlighter' ? 0.35 : 1);
-      if (tool === 'highlighter') ctx.lineWidth = strokeSize * 3;
-      ctx.lineTo(x, y);
-      ctx.stroke();
-    } else if (tool === 'eraser') {
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.lineWidth = strokeSize * 2;
-      ctx.lineTo(x, y);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-    } else if (previewSnap) {
-      // Restore snap and draw preview
-      ctx.putImageData(previewSnap, 0, 0);
-      setupCtx(1);
-      if (tool === 'line') {
-        ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(x, y); ctx.stroke();
-      } else if (tool === 'arrow') {
-        drawArrow(startX, startY, x, y);
-      } else if (tool === 'rect') {
-        ctx.strokeRect(startX, startY, x - startX, y - startY);
-      } else if (tool === 'circle') {
-        const rx = Math.abs(x - startX) / 2;
-        const ry = Math.abs(y - startY) / 2;
-        const cx = startX + (x - startX) / 2;
-        const cy = startY + (y - startY) / 2;
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-        ctx.stroke();
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 60);
+        observer.unobserve(entry.target);
       }
-    }
-    lastX = x; lastY = y;
-  }
-
-  function onUp(e) {
-    if (!isDrawing) return;
-    isDrawing = false;
-    previewSnap = null;
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over';
-  }
-
-  canvas.addEventListener('mousedown', onDown);
-  canvas.addEventListener('mousemove', onMove);
-  canvas.addEventListener('mouseup', onUp);
-  canvas.addEventListener('touchstart', e => { e.preventDefault(); onDown(e); }, {passive:false});
-  canvas.addEventListener('touchmove', e => { e.preventDefault(); onMove(e); }, {passive:false});
-  canvas.addEventListener('touchend', e => { e.preventDefault(); onUp(e); }, {passive:false});
-
-  // Text tool
-  canvas.addEventListener('click', e => {
-    if (tool !== 'text') return;
-    const {x, y} = getPos(e);
-    textPos = {x, y};
-    textInput.style.display = 'block';
-    textInput.style.left = (x + canvas.getBoundingClientRect().left) + 'px';
-    textInput.style.top = (y + canvas.getBoundingClientRect().top - 6) + 'px';
-    textInput.style.color = color;
-    textInput.value = '';
-    textInput.focus();
-  });
-
-  textInput.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      commitText();
-    }
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      commitText();
-    }
-    setTimeout(() => {
-      textInput.style.height = 'auto';
-      textInput.style.height = textInput.scrollHeight + 'px';
-    }, 0);
-  });
-
-  textInput.addEventListener('blur', commitText);
-
-  function commitText() {
-    if (!textPos || !textInput.value.trim()) {
-      textInput.style.display = 'none';
-      return;
-    }
-    saveState();
-    ctx.font = `${Math.max(20, strokeSize * 5)}px Caveat`;
-    ctx.fillStyle = color;
-    ctx.globalAlpha = 1;
-    const lines = textInput.value.split('\n');
-    lines.forEach((line, i) => {
-      ctx.fillText(line, textPos.x, textPos.y + (i * Math.max(24, strokeSize * 6)));
     });
-    textInput.style.display = 'none';
-    textInput.value = '';
-    textPos = null;
-  }
-
-  // Tool buttons
-  document.querySelectorAll('.tool-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      tool = btn.dataset.tool;
-      document.body.className = tool === 'eraser' ? 'eraser-mode' : tool === 'text' ? 'text-mode' : '';
-    });
-  });
-
-  // Color swatches
-  document.querySelectorAll('.color-swatch').forEach(sw => {
-    sw.addEventListener('click', () => {
-      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
-      sw.classList.add('active');
-      color = sw.dataset.color;
-    });
-  });
-
-  // Size dots
-  document.querySelectorAll('.size-dot').forEach(dot => {
-    dot.addEventListener('click', () => {
-      document.querySelectorAll('.size-dot').forEach(d => d.classList.remove('active'));
-      dot.classList.add('active');
-      strokeSize = parseInt(dot.dataset.size);
-    });
-  });
-
-  // Top buttons
-  document.getElementById('btn-undo').addEventListener('click', undo);
-  document.getElementById('btn-redo').addEventListener('click', redo);
-
-  document.getElementById('btn-clear').addEventListener('click', () => {
-    saveState();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    showSnack('Canvas cleared');
-  });
-
-  document.getElementById('btn-save').addEventListener('click', () => {
-    const link = document.createElement('a');
-    link.download = `whiteboard-${Date.now()}.png`;
-    // Composite on white bg
-    const tmp = document.createElement('canvas');
-    tmp.width = canvas.width; tmp.height = canvas.height;
-    const tc = tmp.getContext('2d');
-    tc.fillStyle = '#fdfaf4';
-    tc.fillRect(0, 0, tmp.width, tmp.height);
-    tc.drawImage(canvas, 0, 0);
-    link.href = tmp.toDataURL('image/png');
-    link.click();
-    showSnack('Saved as PNG ✓');
-  });
-
-  // Keyboard shortcuts
-  document.addEventListener('keydown', e => {
-    if (document.activeElement === textInput) return;
-    const k = e.key.toLowerCase();
-    if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); undo(); return; }
-    if ((e.ctrlKey || e.metaKey) && (k === 'y' || (e.shiftKey && k === 'z'))) { e.preventDefault(); redo(); return; }
-    const map = { p: 'pen', h: 'highlighter', l: 'line', a: 'arrow', r: 'rect', c: 'circle', t: 'text', e: 'eraser' };
-    if (map[k] && !e.ctrlKey && !e.metaKey) {
-      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(`tool-${map[k]}`)?.classList.add('active');
-      tool = map[k];
-      document.body.className = tool === 'eraser' ? 'eraser-mode' : tool === 'text' ? 'text-mode' : '';
-    }
-  });
-
-})();
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
 </script>
 </body>
 </html>
