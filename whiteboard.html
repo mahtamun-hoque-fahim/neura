@@ -115,7 +115,8 @@
     <button class="top-btn" id="btn-redo">↪ Redo</button>
     <button class="top-btn" id="btn-clear">🗑 Clear</button>
     <button class="top-btn" id="btn-export">⬇ Export</button>
-    <button class="top-btn green" id="btn-invite" style="display:none">🔗 Invite</button>
+    <button class="top-btn green" id="btn-go-mp" style="display:none">👥 Go Multiplayer</button>
+    <button class="top-btn green" id="btn-invite" style="display:none">👥 Invite</button>
     <button class="top-btn" id="btn-nick">👤 <span id="nick-lbl">Me</span></button>
   </div>
 </div>
@@ -180,6 +181,7 @@ const roomBadge=document.getElementById('room-badge');
 const rdot=document.getElementById('rdot');
 const rlabel=document.getElementById('rlabel');
 const btnInvite=document.getElementById('btn-invite');
+const btnGoMp=document.getElementById('btn-go-mp');
 const nickLbl=document.getElementById('nick-lbl');
 
 // ── RESIZE
@@ -517,6 +519,7 @@ document.getElementById('btn-clear').addEventListener('click',async()=>{
 
 document.getElementById('btn-export').addEventListener('click',()=>showExportModal());
 btnInvite.addEventListener('click',showInviteModal);
+btnGoMp.addEventListener('click',()=>showNickModal('upgrade'));
 document.getElementById('btn-nick').addEventListener('click',()=>{
   modal(`<h2>👤 Change Name</h2><p class="sub">How should others see you?</p>
     <span class="mlabel">Nickname</span>
@@ -557,7 +560,7 @@ function modal(html, setup){
 
 function showInviteModal(){
   const url=location.href.split('#')[0]+'#'+roomId;
-  modal(`<h2>🔗 Invite to Room</h2>
+  modal(`<h2>👥 Invite to Room</h2>
     <p class="sub">Share this link. Anyone with it can join and draw with you.</p>
     <div class="copy-box"><span>${url}</span><button class="cbtn" id="cb">Copy</button></div>
     <p style="font-size:11.5px;color:var(--muted)">Room: <code style="background:rgba(0,0,0,.06);padding:2px 6px;border-radius:4px;font-size:11px">${roomId}</code></p>
@@ -591,8 +594,8 @@ function showStartModal(){
   modal(`<h2>✏️ Neura Whiteboard</h2>
     <p class="sub">Your canvas, your rules. Start solo or collaborate in real-time.</p>
     <button class="mbtn dk" id="m-solo"><div class="micon">🖊️</div><div><strong>Solo Canvas</strong><br><small style="opacity:.6;font-size:11px">Private board, just you</small></div></button>
-    <button class="mbtn gr" id="m-multi"><div class="micon">🔗</div><div><strong>Create Multiplayer Room</strong><br><small style="opacity:.6;font-size:11px">Invite others to draw together</small></div></button>
-    ${isJoining?`<button class="mbtn ol" id="m-join"><div class="micon">🚪</div><div><strong>Join Room</strong><br><small style="opacity:.55;font-size:11px">You were invited!</small></div></button>`:''}`,
+    <button class="mbtn gr" id="m-multi"><div class="micon">👥</div><div><strong>Create Multiplayer Room</strong><br><small style="opacity:.6;font-size:11px">Invite others to draw together</small></div></button>
+    ${isJoining?`<button class="mbtn ol" id="m-join"><div class="micon">👥</div><div><strong>Join Room</strong><br><small style="opacity:.55;font-size:11px">You were invited!</small></div></button>`:''}`,
   bg=>{
     bg.querySelector('#m-solo').onclick=()=>{bg.remove();startSolo()};
     bg.querySelector('#m-multi').onclick=()=>{bg.remove();showNickModal('host')};
@@ -602,19 +605,21 @@ function showStartModal(){
 
 function showNickModal(role){
   const isJoin=role==='join';
-  modal(`<h2>${isJoin?'👋 Joining Room':'🎨 Create Room'}</h2>
-    <p class="sub">${isJoin?'Set a nickname so others know who you are, or stay anonymous.':'Give yourself a name so collaborators can identify you.'}</p>
+  const isUpgrade=role==='upgrade';
+  modal(`<h2>${isJoin?'👋 Joining Room':isUpgrade?'👥 Go Multiplayer':'👥 Create Room'}</h2>
+    <p class="sub">${isJoin?'Set a nickname so others know who you are, or stay anonymous.':isUpgrade?'Your solo canvas will become a multiplayer room. Others can join and draw together with you.':'Give yourself a name so collaborators can identify you.'}</p>
     <span class="mlabel">Your nickname (optional)</span>
     <input class="minput" id="ni2" placeholder="Anonymous" maxlength="24" autocomplete="off"/>
     <div class="mrow">
       <button class="mbtn ol" id="n-anon"><div class="micon">🎭</div>Stay Anon</button>
-      <button class="mbtn gr" id="n-go"><div class="micon">→</div>Let's Go</button>
+      <button class="mbtn gr" id="n-go"><div class="micon">→</div>${isUpgrade?'Upgrade':'Let\'s Go'}</button>
     </div>`,
   bg=>{
     const inp=bg.querySelector('#ni2'); inp.focus();
     function go(nick){
       myNick=nick||''; nickLbl.textContent=myNick||'Anon'; bg.remove();
-      if(isJoin)joinRoom(location.hash.slice(1));
+      if(isJoin) joinRoom(location.hash.slice(1));
+      else if(isUpgrade) upgradeToMultiplayer();
       else createRoom();
     }
     bg.querySelector('#n-anon').onclick=()=>go('');
@@ -627,7 +632,24 @@ async function startSolo(){
   roomId='solo'; isMP=false; location.hash='';
   roomBadge.style.display='flex'; rdot.className='rdot'; rlabel.textContent='solo';
   btnInvite.style.display='none';
+  btnGoMp.style.display=''; // show upgrade button in solo mode
   await replay('solo'); renderPeers();
+}
+
+async function upgradeToMultiplayer(){
+  // Keep existing canvas content — migrate solo strokes to new room
+  const oldStrokes = await getStrokes('solo');
+  roomId='room_'+Math.random().toString(36).slice(2,9);
+  isMP=true; location.hash=roomId;
+  roomBadge.style.display='flex'; rdot.className='rdot live';
+  rlabel.textContent='live · '+(myNick||'Anon');
+  btnInvite.style.display='';
+  btnGoMp.style.display='none'; // hide once in multiplayer
+  // Re-tag existing strokes under new roomId so they persist in the room
+  oldStrokes.forEach(s=>{ s.roomId=roomId; dbPut(s); });
+  initChannel(roomId); renderPeers(); announceJoin();
+  showSnack('Upgraded to multiplayer 👥');
+  setTimeout(showInviteModal,500);
 }
 
 async function createRoom(){
@@ -636,8 +658,9 @@ async function createRoom(){
   roomBadge.style.display='flex'; rdot.className='rdot live';
   rlabel.textContent='live · '+(myNick||'Anon');
   btnInvite.style.display='';
+  btnGoMp.style.display='none';
   initChannel(roomId); await replay(roomId); renderPeers(); announceJoin();
-  showSnack('Room created · share the link 🔗');
+  showSnack('Room created · share the link 👥');
   setTimeout(showInviteModal,600);
 }
 
@@ -646,6 +669,7 @@ async function joinRoom(rid){
   roomBadge.style.display='flex'; rdot.className='rdot live';
   rlabel.textContent='live · '+(myNick||'Anon');
   btnInvite.style.display='';
+  btnGoMp.style.display='none';
   initChannel(rid); await replay(rid); renderPeers(); announceJoin();
   showSnack('Joined room ✨');
 }
