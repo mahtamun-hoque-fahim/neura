@@ -38,8 +38,8 @@ export function Canvas() {
 
   // Expose utilities globally so TopBar can reach them
   useEffect(() => {
-    (window as any).__neura_clear  = clearAll;
-    (window as any).__neura_export = () => {
+    window.__neura_clear  = clearAll;
+    window.__neura_export = () => {
       const PAD = 40;
       const s = staticRef.current;
       if (!s) return;

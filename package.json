@@ -12,7 +12,7 @@
     "@liveblocks/client": "^2.16.0",
     "@liveblocks/react": "^2.16.0",
     "nanoid": "^5.0.9",
-    "next": "^16.2.4",
+    "next": "^15.5.15",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "roughjs": "^4.6.6",

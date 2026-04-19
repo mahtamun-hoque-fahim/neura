@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCanvasStore } from "@/lib/store";
-import { useCanUndo, useCanRedo, useHistory, useOthers } from "@/lib/liveblocks.config";
+import { useCanUndo, useCanRedo, useOthers } from "@/lib/liveblocks.config";
 
 interface TopBarProps {
   roomId: string;
@@ -11,7 +11,6 @@ interface TopBarProps {
 
 export function TopBar({ roomId, isMP }: TopBarProps) {
   const { nick, setNick } = useCanvasStore();
-  const { undo, redo } = useHistory();
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
   const others  = useOthers();
@@ -25,13 +24,13 @@ export function TopBar({ roomId, isMP }: TopBarProps) {
   };
 
   const handleExport = () => {
-    (window as any).__neura_export?.();
+    window.__neura_export?.();
     snack("Board exported ✓");
   };
 
   const handleClear = () => {
     if (!confirm("Clear canvas? This removes all strokes for everyone in the room.")) return;
-    (window as any).__neura_clear?.();
+    window.__neura_clear?.();
     snack("Canvas cleared");
   };
 
@@ -71,8 +70,8 @@ export function TopBar({ roomId, isMP }: TopBarProps) {
 
       {/* Right — actions */}
       <div className="flex items-center gap-1.5 pointer-events-auto flex-wrap justify-end">
-        <Btn onClick={undo} disabled={!canUndo}>↩ Undo</Btn>
-        <Btn onClick={redo} disabled={!canRedo}>↪ Redo</Btn>
+        <Btn onClick={() => window.dispatchEvent(new Event("neura:undo"))} disabled={!canUndo}>↩ Undo</Btn>
+        <Btn onClick={() => window.dispatchEvent(new Event("neura:redo"))} disabled={!canRedo}>↪ Redo</Btn>
         <Btn onClick={handleClear}>🗑 Clear</Btn>
         <Btn onClick={handleExport}>⬇ Export</Btn>
         {isMP && (

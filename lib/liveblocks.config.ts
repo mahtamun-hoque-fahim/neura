@@ -1,5 +1,3 @@
-"use client";
-
 import { createClient, LiveList } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { nanoid } from "nanoid";
 
 export default function Landing() {
@@ -30,7 +30,9 @@ export default function Landing() {
     if (el && !revealRefs.current.includes(el)) revealRefs.current.push(el);
   };
 
-  const newRoom = () => nanoid(9);
+  const roomHero = useMemo(() => nanoid(9), []);
+  const roomNav  = useMemo(() => nanoid(9), []);
+  const roomCta  = useMemo(() => nanoid(9), []);
 
   const TOOLS = [
     { label: "Pen", key: "P" },
@@ -67,7 +69,7 @@ export default function Landing() {
             Features
           </a>
           <Link
-            href={`/whiteboard?room=${newRoom()}`}
+            href={`/whiteboard?room=${roomNav}`}
             className="text-sm font-medium text-white bg-[#1a7a4a] rounded-full px-5 py-2.5 hover:bg-[#2da06a] hover:-translate-y-px transition-all shadow-[0_2px_12px_rgba(26,122,74,.25)]"
           >
             Open Board →
@@ -115,7 +117,7 @@ export default function Landing() {
 
         <div className="relative z-10 flex gap-3.5 items-center mt-11 animate-fade-up-3 max-sm:flex-col max-sm:w-full">
           <Link
-            href={`/whiteboard?room=${newRoom()}`}
+            href={`/whiteboard?room=${roomHero}`}
             className="flex items-center gap-2.5 text-[15px] font-medium text-white bg-[#1a7a4a] rounded-full px-9 py-4 hover:bg-[#2da06a] hover:-translate-y-0.5 transition-all shadow-[0_4px_20px_rgba(26,122,74,.3)] max-sm:w-full max-sm:justify-center"
           >
             Start Drawing
@@ -235,7 +237,7 @@ export default function Landing() {
           </h2>
           <p className="relative z-10 mt-4 text-base text-white/70 font-light">No install. No account. Just open and draw.</p>
           <Link
-            href={`/whiteboard?room=${newRoom()}`}
+            href={`/whiteboard?room=${roomCta}`}
             className="relative z-10 inline-flex items-center gap-2.5 mt-10 text-[15px] font-medium text-[#1a7a4a] bg-white rounded-full px-9 py-4 hover:-translate-y-0.5 transition-all shadow-[0_4px_24px_rgba(0,0,0,.15)] hover:shadow-[0_8px_32px_rgba(0,0,0,.2)]"
           >
             Open Whiteboard
