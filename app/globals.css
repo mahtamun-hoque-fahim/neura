@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --green: #1a7a4a;
+    --green-light: #2da06a;
+    --canvas-bg: #f5f0e8;
+    --paper: #fdfaf4;
+    --toolbar: #1a1a2e;
+  }
+}
+
+/* Canvas cursor states */
+.cursor-crosshair { cursor: crosshair; }
+.cursor-text      { cursor: text; }
+.cursor-none      { cursor: none; }
+
+/* Blob animations for landing */
+@keyframes drift {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(30px, 20px) scale(1.08); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.7); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.animate-fade-up       { animation: fadeUp 0.7s ease both; }
+.animate-fade-up-1     { animation: fadeUp 0.7s 0.1s ease both; }
+.animate-fade-up-2     { animation: fadeUp 0.7s 0.2s ease both; }
+.animate-fade-up-3     { animation: fadeUp 0.7s 0.3s ease both; }
+.animate-fade-up-4     { animation: fadeUp 0.8s 0.45s ease both; }
+.animate-drift         { animation: drift 12s ease-in-out infinite alternate; }
+.animate-drift-2       { animation: drift 12s 6s ease-in-out infinite alternate; }
+.animate-drift-3       { animation: drift 12s 3s ease-in-out infinite alternate; }
+.animate-pulse-dot     { animation: pulse-dot 2s ease infinite; }
+.animate-blink         { animation: blink 1.8s ease infinite; }
+
+/* Remote cursors */
+.remote-cursor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  transition: left 80ms linear, top 80ms linear;
+}
+
+.remote-cursor-label {
+  position: absolute;
+  top: 20px;
+  left: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  color: #fff;
+  white-space: nowrap;
+  font-family: var(--font-dm-sans), sans-serif;
+}
+
+/* Snack toast */
+@keyframes snackIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.snack-enter { animation: snackIn 0.2s ease; }
+
+/* Smooth scroll */
+html { scroll-behavior: smooth; }
