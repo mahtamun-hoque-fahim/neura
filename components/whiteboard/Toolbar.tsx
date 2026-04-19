@@ -3,6 +3,7 @@
 import { useCanvasStore, TOOL_COLORS, type Tool } from "@/lib/store";
 
 const TOOLS: { id: Tool; icon: string; label: string; key: string }[] = [
+  { id: "select",      icon: "↖",  label: "Select",      key: "S" },
   { id: "pen",         icon: "✏️", label: "Pen",         key: "P" },
   { id: "highlighter", icon: "🖊️", label: "Highlighter", key: "H" },
   { id: "line",        icon: "╱",  label: "Line",        key: "L" },

@@ -57,6 +57,7 @@ function Board({ roomId, isMP }: { roomId: string; isMP: boolean }) {
       }
 
       const map: Record<string, Tool> = {
+        s: "select",
         p: "pen",
         h: "highlighter",
         l: "line",

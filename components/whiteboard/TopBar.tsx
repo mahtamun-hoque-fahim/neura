@@ -70,6 +70,7 @@ export function TopBar({ roomId, isMP }: TopBarProps) {
 
       {/* Right — actions */}
       <div className="flex items-center gap-1.5 pointer-events-auto flex-wrap justify-end">
+        <Btn onClick={() => window.dispatchEvent(new Event("neura:zoom-reset"))}>100%</Btn>
         <Btn onClick={() => window.dispatchEvent(new Event("neura:undo"))} disabled={!canUndo}>↩ Undo</Btn>
         <Btn onClick={() => window.dispatchEvent(new Event("neura:redo"))} disabled={!canRedo}>↪ Redo</Btn>
         <Btn onClick={handleClear}>🗑 Clear</Btn>
