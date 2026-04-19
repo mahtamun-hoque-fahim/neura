@@ -56,8 +56,8 @@ export function TopBar({ roomId, isMP }: TopBarProps) {
             <>
               <span className="w-[7px] h-[7px] rounded-full bg-[#22a86a] flex-shrink-0 animate-blink" />
               live · {nick || "Anon"}
-              {others.count > 0 && (
-                <span className="opacity-50 ml-1">+{others.count}</span>
+              {others.length > 0 && (
+                <span className="opacity-50 ml-1">+{others.length}</span>
               )}
             </>
           ) : (
