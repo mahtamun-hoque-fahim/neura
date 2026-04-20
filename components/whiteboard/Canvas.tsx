@@ -192,8 +192,11 @@ export function Canvas() {
   // ── Redraw static canvas ────────────────────────────────────────────────────
   const redrawStatic = useCallback(() => {
     const canvas = staticRef.current;
-    const rc     = rcStaticRef.current;
-    if (!canvas || !rc) return;
+    if (!canvas) return;
+    // Init rough on-demand — eliminates the race between resize + rough init effects
+    if (!rcStaticRef.current) rcStaticRef.current = rough.canvas(canvas);
+    const rc = rcStaticRef.current;
+    if (!rc) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const vp = vpRef.current;
@@ -432,7 +435,26 @@ export function Canvas() {
       case "rect":    el = { id: crypto.randomUUID(), type: "rect",   color, size: strokeSize, alpha: 1, seed, x: swx, y: swy, w: wx - swx, h: wy - swy }; break;
       case "circle":  el = { id: crypto.randomUUID(), type: "circle", color, size: strokeSize, alpha: 1, seed, cx: swx + (wx - swx) / 2, cy: swy + (wy - swy) / 2, rx, ry }; break;
     }
-    if (el) addElement(el);
+    if (el) {
+      // ── Optimistic local render ──────────────────────────────────────────────
+      // Draw immediately to static canvas — don't wait for Liveblocks round-trip.
+      // This guarantees the stroke is visible the instant the user lifts the pointer.
+      // The useEffect watching `elements` will do a full redraw once Liveblocks confirms.
+      const sc = staticRef.current;
+      if (!sc) return;
+      if (!rcStaticRef.current) rcStaticRef.current = rough.canvas(sc);
+      const rc = rcStaticRef.current;
+      if (rc) {
+        const ctx = sc.getContext("2d")!;
+        const vp  = vpRef.current;
+        ctx.save();
+        ctx.translate(vp.x, vp.y);
+        ctx.scale(vp.scale, vp.scale);
+        renderEl(el, ctx, rc);
+        ctx.restore();
+      }
+      addElement(el);
+    }
   };
 
   const onCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
