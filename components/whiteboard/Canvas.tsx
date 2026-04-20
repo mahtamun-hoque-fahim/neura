@@ -87,7 +87,6 @@ export function Canvas() {
   const rcPreviewRef = useRef<RoughCanvas | null>(null);
 
   const vpRef          = useRef<Viewport>({ x: 0, y: 0, scale: 1 });
-  const [, forceRender] = useState(0);
 
   const isDrawingRef      = useRef(false);
   const isPanningRef      = useRef(false);
@@ -105,6 +104,12 @@ export function Canvas() {
   const { tool, color, strokeSize } = useCanvasStore();
   const [, updatePresence] = useMyPresence();
   const elements = useStorage((root) => root.elements);
+
+  // ── Keep a ref so event handlers always read the latest elements ─────────────
+  // This prevents stale-closure bugs when redrawStatic is called from
+  // pointer events rather than from the useEffect.
+  const elementsRef = useRef(elements);
+  useEffect(() => { elementsRef.current = elements; }, [elements]);
 
   const addElement = useMutation(({ storage }, el: StrokeElement) => {
     storage.get("elements").push(el);
@@ -190,12 +195,15 @@ export function Canvas() {
   );
 
   // ── Redraw static canvas ────────────────────────────────────────────────────
+  // Reads elements from elementsRef (always current) so it is safe to call
+  // from pointer-event handlers without stale-closure risk.
   const redrawStatic = useCallback(() => {
     const canvas = staticRef.current;
     if (!canvas) return;
     // Init rough on-demand — eliminates the race between resize + rough init effects
     if (!rcStaticRef.current) rcStaticRef.current = rough.canvas(canvas);
-    const rc = rcStaticRef.current;
+    const rc  = rcStaticRef.current;
+    const els = elementsRef.current;   // ← always fresh, never stale
     if (!rc) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -228,8 +236,8 @@ export function Canvas() {
     ctx.save();
     ctx.translate(vp.x, vp.y);
     ctx.scale(vp.scale, vp.scale);
-    if (elements) {
-      for (const el of elements) {
+    if (els) {
+      for (const el of els) {
         if (el.id === selectedIdRef.current) {
           const bb = getBBox(el);
           ctx.save();
@@ -244,7 +252,7 @@ export function Canvas() {
       }
     }
     ctx.restore();
-  }, [elements, renderEl]);
+  }, [renderEl]); // elementsRef is a ref — stable, no dep needed
 
   useEffect(() => { redrawStatic(); }, [elements, redrawStatic]);
 
@@ -316,14 +324,16 @@ export function Canvas() {
     if (tool === "text") return;
 
     if (tool === "select") {
-      const hit = elements ? [...elements].reverse().find((el) => hitTest(el, wx, wy)) : undefined;
+      const hit = elementsRef.current
+        ? [...elementsRef.current].reverse().find((el) => hitTest(el, wx, wy))
+        : undefined;
       selectedIdRef.current = hit?.id ?? null;
       if (hit) {
         isDraggingRef.current     = true;
         dragStartWorldRef.current = [wx, wy];
       }
-      forceRender((n) => n + 1);
-      redrawStatic();
+      // Redraw via rAF — guarantees elementsRef is fully current before painting
+      requestAnimationFrame(redrawStatic);
       return;
     }
 
@@ -473,7 +483,7 @@ export function Canvas() {
       if ((e.key === "Backspace" || e.key === "Delete") && selectedIdRef.current) {
         deleteElement(selectedIdRef.current);
         selectedIdRef.current = null;
-        forceRender((n) => n + 1);
+        requestAnimationFrame(redrawStatic);
       }
     };
     window.addEventListener("keydown", handler);
