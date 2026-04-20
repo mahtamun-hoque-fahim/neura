@@ -133,13 +133,13 @@ export function WhiteboardApp({
   return (
     <RoomProvider
       id={`neura-${roomId}`}
-      initialPresence={{
+      initialPresence={() => ({
         cursor: null,
         tool:   "pen",
         color:  userColor,
         nick:   nick,
-      }}
-      initialStorage={{ elements: new LiveList([]) }}
+      })}
+      initialStorage={() => ({ elements: new LiveList([]) })}
     >
       <UndoRedoBridge />
       <Board roomId={roomId} isMP={isMP} />
