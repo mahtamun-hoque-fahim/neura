@@ -9,7 +9,10 @@ import {
   useMutation,
   useStorage,
   type StrokeElement,
+  type CircuitSymbol,
 } from "@/lib/liveblocks.config";
+import { CircuitSVG } from "./EngineeringSidebar";
+import ReactDOM from "react-dom";
 
 // ── Viewport ──────────────────────────────────────────────────────────────────
 interface Viewport { x: number; y: number; scale: number; }
@@ -40,6 +43,7 @@ function hitTest(el: StrokeElement, wx: number, wy: number): boolean {
       return Math.hypot(wx - ((el.x1 ?? 0) + t * dx), wy - ((el.y1 ?? 0) + t * dy)) < PAD;
     }
     case "rect":
+    case "diamond":
       return wx >= (el.x ?? 0) - PAD && wx <= (el.x ?? 0) + (el.w ?? 0) + PAD &&
              wy >= (el.y ?? 0) - PAD && wy <= (el.y ?? 0) + (el.h ?? 0) + PAD;
     case "circle": {
@@ -51,6 +55,9 @@ function hitTest(el: StrokeElement, wx: number, wy: number): boolean {
       return wx >= (el.x ?? 0) - PAD && wx <= (el.x ?? 0) + 200 + PAD &&
              wy >= (el.y ?? 0) - (el.fontSize ?? 20) - PAD &&
              wy <= (el.y ?? 0) + (el.lines ?? []).length * (el.lineHeight ?? 28) + PAD;
+    case "circuit":
+      return wx >= (el.sx ?? 0) - PAD && wx <= (el.sx ?? 0) + (el.sw ?? 80) + PAD &&
+             wy >= (el.sy ?? 0) - PAD && wy <= (el.sy ?? 0) + (el.sh ?? 50) + PAD;
     default: return false;
   }
 }
@@ -65,11 +72,14 @@ function translateEl(el: StrokeElement, dx: number, dy: number): StrokeElement {
   if (e.y  !== undefined) e.y  += dy;
   if (e.cx !== undefined) e.cx += dx;
   if (e.cy !== undefined) e.cy += dy;
+  if (e.sx !== undefined) e.sx += dx;
+  if (e.sy !== undefined) e.sy += dy;
   return e;
 }
 
 // ── Bounding box ──────────────────────────────────────────────────────────────
 function getBBox(el: StrokeElement) {
+  if (el.type === "circuit") return { x: el.sx ?? 0, y: el.sy ?? 0, w: el.sw ?? 80, h: el.sh ?? 50 };
   if (el.pts?.length) {
     const xs = el.pts.map(p => p[0]), ys = el.pts.map(p => p[1]);
     return { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
@@ -86,8 +96,7 @@ export function Canvas() {
   const rcStaticRef  = useRef<RoughCanvas | null>(null);
   const rcPreviewRef = useRef<RoughCanvas | null>(null);
 
-  const vpRef          = useRef<Viewport>({ x: 0, y: 0, scale: 1 });
-
+  const vpRef             = useRef<Viewport>({ x: 0, y: 0, scale: 1 });
   const isDrawingRef      = useRef(false);
   const isPanningRef      = useRef(false);
   const isDraggingRef     = useRef(false);
@@ -101,13 +110,14 @@ export function Canvas() {
   const [textPos, setTextPos] = useState<{ wx: number; wy: number } | null>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
 
-  const { tool, color, strokeSize } = useCanvasStore();
+  // Circuit overlay rendering
+  const [circuitOverlays, setCircuitOverlays] = useState<
+    { id: string; symbol: CircuitSymbol; screenX: number; screenY: number; screenW: number; screenH: number; color: string }[]
+  >([]);
+
+  const { tool, color, strokeSize, mode, sidebarOpen } = useCanvasStore();
   const [, updatePresence] = useMyPresence();
   const elements = useStorage((root) => root.elements);
-
-  // ── Keep a ref so event handlers always read the latest elements ─────────────
-  // This prevents stale-closure bugs when redrawStatic is called from
-  // pointer events rather than from the useEffect.
   const elementsRef = useRef(elements);
   useEffect(() => { elementsRef.current = elements; }, [elements]);
 
@@ -131,9 +141,10 @@ export function Canvas() {
     if (idx !== -1) list.delete(idx);
   }, []);
 
-  // ── Render one element (ctx already transformed to world space) ─────────────
+  // ── Render one element ──────────────────────────────────────────────────────
   const renderEl = useCallback(
     (el: StrokeElement, ctx: CanvasRenderingContext2D, rc: RoughCanvas) => {
+      if (el.type === "circuit") return; // handled as DOM overlay
       ctx.save();
       ctx.globalAlpha = el.alpha ?? 1;
       ctx.strokeStyle = el.color;
@@ -155,7 +166,6 @@ export function Canvas() {
           break;
 
         case "erase":
-          // Paint over with background color — works correctly on re-render
           if (el.pts && el.pts.length > 1) {
             ctx.strokeStyle = "#f5f0e8";
             ctx.lineWidth   = el.size * 2;
@@ -181,6 +191,18 @@ export function Canvas() {
         }
 
         case "rect":   rc.rectangle(el.x!, el.y!, el.w!, el.h!, ro); break;
+
+        case "diamond": {
+          const cx = el.x! + el.w! / 2, cy = el.y! + el.h! / 2;
+          rc.polygon([
+            [cx, el.y!],
+            [el.x! + el.w!, cy],
+            [cx, el.y! + el.h!],
+            [el.x!, cy],
+          ], ro);
+          break;
+        }
+
         case "circle": rc.ellipse(el.cx!, el.cy!, el.rx! * 2, el.ry! * 2, ro); break;
 
         case "text":
@@ -194,16 +216,35 @@ export function Canvas() {
     []
   );
 
+  // ── Update circuit DOM overlays ────────────────────────────────────────────
+  const updateCircuitOverlays = useCallback(() => {
+    const els = elementsRef.current;
+    const vp  = vpRef.current;
+    if (!els) { setCircuitOverlays([]); return; }
+    const overlays = [...els]
+      .filter(el => el.type === "circuit" && el.symbol && el.sx !== undefined)
+      .map(el => {
+        const [sx, sy] = worldToScreen(el.sx!, el.sy!, vp);
+        return {
+          id: el.id,
+          symbol: el.symbol!,
+          screenX: sx,
+          screenY: sy,
+          screenW: (el.sw ?? 80) * vp.scale,
+          screenH: (el.sh ?? 50) * vp.scale,
+          color: el.color,
+        };
+      });
+    setCircuitOverlays(overlays);
+  }, []);
+
   // ── Redraw static canvas ────────────────────────────────────────────────────
-  // Reads elements from elementsRef (always current) so it is safe to call
-  // from pointer-event handlers without stale-closure risk.
   const redrawStatic = useCallback(() => {
     const canvas = staticRef.current;
     if (!canvas) return;
-    // Init rough on-demand — eliminates the race between resize + rough init effects
     if (!rcStaticRef.current) rcStaticRef.current = rough.canvas(canvas);
     const rc  = rcStaticRef.current;
-    const els = elementsRef.current;   // ← always fresh, never stale
+    const els = elementsRef.current;
     if (!rc) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -252,11 +293,13 @@ export function Canvas() {
       }
     }
     ctx.restore();
-  }, [renderEl]); // elementsRef is a ref — stable, no dep needed
+
+    updateCircuitOverlays();
+  }, [renderEl, updateCircuitOverlays]);
 
   useEffect(() => { redrawStatic(); }, [elements, redrawStatic]);
 
-  // ── Init ────────────────────────────────────────────────────────────────────
+  // ── Init + resize ───────────────────────────────────────────────────────────
   useEffect(() => {
     const resize = () => {
       [staticRef, previewRef].forEach((r) => {
@@ -267,7 +310,7 @@ export function Canvas() {
     resize();
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -296,6 +339,50 @@ export function Canvas() {
     return () => canvas.removeEventListener("wheel", onWheel);
   }, [redrawStatic]);
 
+  // ── Drag-drop from sidebar ──────────────────────────────────────────────────
+  useEffect(() => {
+    const canvas = previewRef.current;
+    if (!canvas) return;
+
+    const onDragOver = (e: DragEvent) => {
+      if (e.dataTransfer?.types.includes("neura/circuit-symbol")) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+      }
+    };
+
+    const onDrop = (e: DragEvent) => {
+      e.preventDefault();
+      const symbol = e.dataTransfer?.getData("neura/circuit-symbol") as CircuitSymbol | undefined;
+      if (!symbol) return;
+      const r = canvas.getBoundingClientRect();
+      const [wx, wy] = screenToWorld(e.clientX - r.left, e.clientY - r.top, vpRef.current);
+      // Default symbol world size
+      const sw = 80, sh = 50;
+      const el: StrokeElement = {
+        id: crypto.randomUUID(),
+        type: "circuit",
+        color: useCanvasStore.getState().color,
+        size: 2,
+        alpha: 1,
+        seed: 0,
+        symbol,
+        sx: wx - sw / 2,
+        sy: wy - sh / 2,
+        sw,
+        sh,
+      };
+      addElement(el);
+    };
+
+    canvas.addEventListener("dragover", onDragOver);
+    canvas.addEventListener("drop", onDrop);
+    return () => {
+      canvas.removeEventListener("dragover", onDragOver);
+      canvas.removeEventListener("drop", onDrop);
+    };
+  }, [addElement]);
+
   // ── Pointer helpers ─────────────────────────────────────────────────────────
   const getScreen = (e: React.PointerEvent<HTMLCanvasElement>): [number, number] => {
     const r = previewRef.current!.getBoundingClientRect();
@@ -314,14 +401,19 @@ export function Canvas() {
     const [sx, sy] = getScreen(e);
     const [wx, wy] = screenToWorld(sx, sy, vpRef.current);
 
-    if (e.button === 1) {
+    if (e.button === 1 || tool === "hand") {
       isPanningRef.current  = true;
       startScreenRef.current = [sx, sy];
       startVpRef.current    = { ...vpRef.current };
       return;
     }
 
+    if (tool === "lock") return;
     if (tool === "text") return;
+    if (tool === "image") return;
+    if (tool === "laser") return;
+    if (tool === "frame") return;
+    if (tool === "lasso") return;
 
     if (tool === "select") {
       const hit = elementsRef.current
@@ -332,7 +424,6 @@ export function Canvas() {
         isDraggingRef.current     = true;
         dragStartWorldRef.current = [wx, wy];
       }
-      // Redraw via rAF — guarantees elementsRef is fully current before painting
       requestAnimationFrame(redrawStatic);
       return;
     }
@@ -401,6 +492,7 @@ export function Canvas() {
         pts.forEach(([px, py]) => ctx.lineTo(px, py)); ctx.stroke();
         break;
       case "line": rc.line(swx, swy, wx, wy, ro); break;
+      case "connector": rc.line(swx, swy, wx, wy, { ...ro, strokeWidth: strokeSize, roughness: 0 }); break;
       case "arrow": {
         rc.line(swx, swy, wx, wy, ro);
         const ang = Math.atan2(wy - swy, wx - swx), hl = Math.max(14, strokeSize * 4);
@@ -410,6 +502,11 @@ export function Canvas() {
         ctx.closePath(); ctx.fill(); break;
       }
       case "rect": rc.rectangle(swx, swy, wx - swx, wy - swy, ro); break;
+      case "diamond": {
+        const cxd = swx + (wx - swx) / 2, cyd = swy + (wy - swy) / 2;
+        rc.polygon([[cxd, swy], [wx, cyd], [cxd, wy], [swx, cyd]], ro);
+        break;
+      }
       case "circle": {
         const rx = Math.abs(wx - swx) / 2, ry = Math.abs(wy - swy) / 2;
         rc.ellipse(swx + (wx - swx) / 2, swy + (wy - swy) / 2, rx * 2, ry * 2, ro);
@@ -437,19 +534,17 @@ export function Canvas() {
 
     let el: StrokeElement | null = null;
     switch (tool) {
-      case "pen":         if (pts.length > 1) el = { id: crypto.randomUUID(), type: "path",   color,        size: strokeSize,     alpha: 1,    seed, pts }; break;
-      case "highlighter": if (pts.length > 1) el = { id: crypto.randomUUID(), type: "path",   color,        size: strokeSize * 3, alpha: 0.35, seed, pts }; break;
-      case "eraser":      if (pts.length > 1) el = { id: crypto.randomUUID(), type: "erase",  color: "#f5f0e8", size: strokeSize,  alpha: 1,    seed, pts }; break;
-      case "line":    el = { id: crypto.randomUUID(), type: "line",   color, size: strokeSize, alpha: 1, seed, x1: swx, y1: swy, x2: wx, y2: wy }; break;
-      case "arrow":   el = { id: crypto.randomUUID(), type: "arrow",  color, size: strokeSize, alpha: 1, seed, x1: swx, y1: swy, x2: wx, y2: wy }; break;
-      case "rect":    el = { id: crypto.randomUUID(), type: "rect",   color, size: strokeSize, alpha: 1, seed, x: swx, y: swy, w: wx - swx, h: wy - swy }; break;
-      case "circle":  el = { id: crypto.randomUUID(), type: "circle", color, size: strokeSize, alpha: 1, seed, cx: swx + (wx - swx) / 2, cy: swy + (wy - swy) / 2, rx, ry }; break;
+      case "pen":         if (pts.length > 1) el = { id: crypto.randomUUID(), type: "path",   color, size: strokeSize,     alpha: 1,    seed, pts }; break;
+      case "highlighter": if (pts.length > 1) el = { id: crypto.randomUUID(), type: "path",   color, size: strokeSize * 3, alpha: 0.35, seed, pts }; break;
+      case "eraser":      if (pts.length > 1) el = { id: crypto.randomUUID(), type: "erase",  color: "#f5f0e8", size: strokeSize, alpha: 1, seed, pts }; break;
+      case "line":       el = { id: crypto.randomUUID(), type: "line",    color, size: strokeSize, alpha: 1, seed, x1: swx, y1: swy, x2: wx, y2: wy }; break;
+      case "connector":  el = { id: crypto.randomUUID(), type: "line",    color, size: strokeSize, alpha: 1, seed: 0, x1: swx, y1: swy, x2: wx, y2: wy }; break;
+      case "arrow":      el = { id: crypto.randomUUID(), type: "arrow",   color, size: strokeSize, alpha: 1, seed, x1: swx, y1: swy, x2: wx, y2: wy }; break;
+      case "rect":       el = { id: crypto.randomUUID(), type: "rect",    color, size: strokeSize, alpha: 1, seed, x: swx, y: swy, w: wx - swx, h: wy - swy }; break;
+      case "diamond":    el = { id: crypto.randomUUID(), type: "diamond", color, size: strokeSize, alpha: 1, seed, x: swx, y: swy, w: wx - swx, h: wy - swy }; break;
+      case "circle":     el = { id: crypto.randomUUID(), type: "circle",  color, size: strokeSize, alpha: 1, seed, cx: swx + (wx - swx) / 2, cy: swy + (wy - swy) / 2, rx, ry }; break;
     }
     if (el) {
-      // ── Optimistic local render ──────────────────────────────────────────────
-      // Draw immediately to static canvas — don't wait for Liveblocks round-trip.
-      // This guarantees the stroke is visible the instant the user lifts the pointer.
-      // The useEffect watching `elements` will do a full redraw once Liveblocks confirms.
       const sc = staticRef.current;
       if (!sc) return;
       if (!rcStaticRef.current) rcStaticRef.current = rough.canvas(sc);
@@ -475,7 +570,7 @@ export function Canvas() {
     setTimeout(() => textRef.current?.focus(), 10);
   };
 
-  // Delete with Backspace/Delete
+  // Delete selected
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const tag = (document.activeElement as HTMLElement)?.tagName;
@@ -488,9 +583,9 @@ export function Canvas() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [deleteElement]);
+  }, [deleteElement, redrawStatic]);
 
-  // Expose globals for TopBar
+  // Expose globals
   useEffect(() => {
     window.__neura_clear  = clearAll;
     window.__neura_export = () => {
@@ -522,14 +617,23 @@ export function Canvas() {
 
   const textScreenPos = textPos ? worldToScreen(textPos.wx, textPos.wy, vpRef.current) : null;
 
-  const cursorStyle = isPanningRef.current ? "cursor-grabbing" :
+  // Sidebar offset for canvas positioning
+  const sidebarWidth = mode === "engineering" && sidebarOpen ? 220 : mode === "engineering" && !sidebarOpen ? 0 : 0;
+
+  const cursorStyle =
+    tool === "hand" || isPanningRef.current ? "cursor-grab" :
+    tool === "lock"   ? "cursor-default" :
     tool === "eraser" ? "cursor-none" :
     tool === "text"   ? "cursor-text"  :
     tool === "select" ? "cursor-default" :
+    tool === "laser"  ? "cursor-none" :
     "cursor-crosshair";
 
   return (
-    <div className="absolute inset-0">
+    <div
+      className="absolute inset-0"
+      style={{ left: sidebarWidth }}
+    >
       <canvas ref={staticRef}  className="absolute inset-0" />
       <canvas
         ref={previewRef}
@@ -540,6 +644,26 @@ export function Canvas() {
         onPointerLeave={() => updatePresence({ cursor: null })}
         onClick={onCanvasClick}
       />
+
+      {/* Circuit symbol overlays (SVG rendered in DOM for crisp scaling) */}
+      {circuitOverlays.map(ov => (
+        <div
+          key={ov.id}
+          className="absolute pointer-events-none"
+          style={{
+            left: ov.screenX,
+            top:  ov.screenY,
+            width:  ov.screenW,
+            height: ov.screenH,
+            transformOrigin: "top left",
+          }}
+        >
+          <div style={{ transform: `scale(${ov.screenW / 80})`, transformOrigin: "top left" }}>
+            <CircuitSVG symbol={ov.symbol} color={ov.color} />
+          </div>
+        </div>
+      ))}
+
       {textPos && textScreenPos && (
         <textarea
           ref={textRef}

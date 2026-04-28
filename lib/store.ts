@@ -1,15 +1,25 @@
 import { create } from "zustand";
 
 export type Tool =
-  | "pen"
-  | "highlighter"
-  | "line"
-  | "arrow"
+  | "lock"
+  | "hand"
+  | "select"
   | "rect"
+  | "diamond"
   | "circle"
+  | "arrow"
+  | "line"
+  | "pen"
   | "text"
+  | "image"
   | "eraser"
-  | "select";
+  | "connector"
+  | "highlighter"
+  | "frame"
+  | "laser"
+  | "lasso";
+
+export type Mode = "normal" | "engineering";
 
 export const TOOL_COLORS = [
   "#1a1a2e",
@@ -37,20 +47,28 @@ interface CanvasStore {
   strokeSize: number;
   nick: string;
   userColor: string;
+  mode: Mode;
+  sidebarOpen: boolean;
   setTool: (tool: Tool) => void;
   setColor: (color: string) => void;
   setStrokeSize: (size: number) => void;
   setNick: (nick: string) => void;
+  setMode: (mode: Mode) => void;
+  setSidebarOpen: (open: boolean) => void;
 }
 
 export const useCanvasStore = create<CanvasStore>(() => ({
-  tool: "pen",
+  tool: "select",
   color: "#1a1a2e",
   strokeSize: 3,
   nick: "",
   userColor: USER_COLORS[Math.floor(Math.random() * USER_COLORS.length)],
+  mode: "normal",
+  sidebarOpen: true,
   setTool: (tool) => useCanvasStore.setState({ tool }),
   setColor: (color) => useCanvasStore.setState({ color }),
   setStrokeSize: (strokeSize) => useCanvasStore.setState({ strokeSize }),
   setNick: (nick) => useCanvasStore.setState({ nick }),
+  setMode: (mode) => useCanvasStore.setState({ mode }),
+  setSidebarOpen: (sidebarOpen) => useCanvasStore.setState({ sidebarOpen }),
 }));

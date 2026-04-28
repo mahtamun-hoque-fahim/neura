@@ -10,10 +10,10 @@ import { Canvas }      from "./Canvas";
 import { Toolbar }     from "./Toolbar";
 import { TopBar }      from "./TopBar";
 import { LiveCursors } from "./LiveCursors";
+import { EngineeringSidebar } from "./EngineeringSidebar";
 import { useCanvasStore, type Tool } from "@/lib/store";
 
 // ── Undo/Redo bridge ──────────────────────────────────────────────────────────
-// Liveblocks hooks must live inside RoomProvider, so we bridge via window events
 function UndoRedoBridge() {
   const { undo, redo } = useHistory();
   useEffect(() => {
@@ -29,9 +29,9 @@ function UndoRedoBridge() {
   return null;
 }
 
-// ── Inner board (inside RoomProvider) ────────────────────────────────────────
+// ── Inner board ────────────────────────────────────────────────────────────────
 function Board({ roomId, isMP }: { roomId: string; isMP: boolean }) {
-  const { setTool } = useCanvasStore();
+  const { setTool, mode } = useCanvasStore();
   const [snack, setSnack] = useState<string | null>(null);
 
   // Keyboard shortcuts
@@ -57,15 +57,21 @@ function Board({ roomId, isMP }: { roomId: string; isMP: boolean }) {
       }
 
       const map: Record<string, Tool> = {
-        s: "select",
-        p: "pen",
-        h: "highlighter",
-        l: "line",
-        a: "arrow",
+        q: "lock",
+        h: "hand",
+        v: "select",
         r: "rect",
-        c: "circle",
+        d: "diamond",
+        o: "circle",
+        a: "arrow",
+        l: "line",
+        p: "pen",
         t: "text",
+        i: "image",
         e: "eraser",
+        c: "connector",
+        f: "frame",
+        k: "laser",
       };
       if (map[k] && !e.ctrlKey && !e.metaKey) setTool(map[k]);
     };
@@ -73,7 +79,7 @@ function Board({ roomId, isMP }: { roomId: string; isMP: boolean }) {
     return () => window.removeEventListener("keydown", handler);
   }, [setTool]);
 
-  // Snack toast listener
+  // Snack toast
   useEffect(() => {
     const handler = (e: Event) => {
       const msg = (e as CustomEvent<string>).detail;
@@ -105,6 +111,9 @@ function Board({ roomId, isMP }: { roomId: string; isMP: boolean }) {
         }}
       />
 
+      {/* Engineering sidebar (left) */}
+      {mode === "engineering" && <EngineeringSidebar />}
+
       <Canvas />
       <LiveCursors />
       <TopBar roomId={roomId} isMP={isMP} />
@@ -112,7 +121,7 @@ function Board({ roomId, isMP }: { roomId: string; isMP: boolean }) {
 
       {/* Snack toast */}
       {snack && (
-        <div className="fixed bottom-[90px] left-1/2 -translate-x-1/2 bg-[#1a1a2e] text-white text-[12.5px] px-4 py-2 rounded-[10px] z-[300] pointer-events-none whitespace-nowrap snack-enter font-dm shadow-lg">
+        <div className="fixed bottom-[110px] left-1/2 -translate-x-1/2 bg-[#1a1a2e] text-white text-[12.5px] px-4 py-2 rounded-[10px] z-[300] pointer-events-none whitespace-nowrap snack-enter font-dm shadow-lg">
           {snack}
         </div>
       )}
@@ -120,7 +129,7 @@ function Board({ roomId, isMP }: { roomId: string; isMP: boolean }) {
   );
 }
 
-// ── Public export ─────────────────────────────────────────────────────────────
+// ── Public export ──────────────────────────────────────────────────────────────
 export function WhiteboardApp({
   roomId,
   isMP,
@@ -128,14 +137,14 @@ export function WhiteboardApp({
   roomId: string;
   isMP: boolean;
 }) {
-  const { nick, color, userColor } = useCanvasStore();
+  const { nick, userColor } = useCanvasStore();
 
   return (
     <RoomProvider
       id={`neura-${roomId}`}
       initialPresence={() => ({
         cursor: null,
-        tool:   "pen",
+        tool:   "select",
         color:  userColor,
         nick:   nick,
       })}

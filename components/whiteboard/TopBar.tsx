@@ -10,7 +10,7 @@ interface TopBarProps {
 }
 
 export function TopBar({ roomId, isMP }: TopBarProps) {
-  const { nick, setNick } = useCanvasStore();
+  const { nick, setNick, mode, setMode } = useCanvasStore();
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
   const others  = useOthers();
@@ -41,7 +41,7 @@ export function TopBar({ roomId, isMP }: TopBarProps) {
 
   return (
     <div className="fixed top-0 left-0 right-0 h-[52px] flex items-center justify-between px-4 z-[99] pointer-events-none">
-      {/* Left — logo + room badge */}
+      {/* Left — logo + room badge + mode switcher */}
       <div className="flex items-center gap-2.5 pointer-events-auto">
         <Link
           href="/"
@@ -66,6 +66,19 @@ export function TopBar({ roomId, isMP }: TopBarProps) {
             </>
           )}
         </div>
+
+        {/* Mode switcher */}
+        <div
+          className="flex items-center gap-0.5 rounded-[9px] p-0.5 h-[30px]"
+          style={{ background: "rgba(253,250,244,.88)", border: "1px solid rgba(26,26,46,.12)" }}
+        >
+          <ModeBtn active={mode === "normal"} onClick={() => setMode("normal")}>
+            Normal
+          </ModeBtn>
+          <ModeBtn active={mode === "engineering"} onClick={() => setMode("engineering")}>
+            ⚡ Engineering
+          </ModeBtn>
+        </div>
       </div>
 
       {/* Right — actions */}
@@ -81,6 +94,29 @@ export function TopBar({ roomId, isMP }: TopBarProps) {
         <Btn onClick={handleNick}>👤 {nick || "Me"}</Btn>
       </div>
     </div>
+  );
+}
+
+function ModeBtn({
+  children,
+  active,
+  onClick,
+}: {
+  children: React.ReactNode;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-2.5 h-[22px] rounded-[6px] text-[11px] font-semibold transition-all whitespace-nowrap
+        ${active
+          ? "bg-[#1a1a2e] text-[#fdfaf4]"
+          : "bg-transparent text-[#5a7a68] hover:bg-[#1a1a2e]/08"
+        }`}
+    >
+      {children}
+    </button>
   );
 }
 
