@@ -300,11 +300,11 @@ export function EngineeringSidebar() {
       <button
         onClick={() => setSidebarOpen(true)}
         title="Open circuit panel"
-        className="fixed left-3 top-1/2 -translate-y-1/2 z-[90] w-8 h-16 rounded-xl flex items-center justify-center shadow-md transition-all hover:scale-105"
+        className="fixed right-3 top-1/2 -translate-y-1/2 z-[90] w-8 h-16 rounded-xl flex items-center justify-center shadow-md transition-all hover:scale-105"
         style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.1)" }}
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#666" strokeWidth="1.7" strokeLinecap="round">
-          <path d="M5 2l5 5-5 5" />
+          <path d="M9 2L4 7l5 5" />
         </svg>
       </button>
     );
@@ -312,12 +312,12 @@ export function EngineeringSidebar() {
 
   return (
     <div
-      className="fixed left-0 top-0 bottom-0 z-[90] flex flex-col select-none"
+      className="fixed right-0 top-0 bottom-0 z-[90] flex flex-col select-none"
       style={{
         width: 220,
         background: "#fff",
-        borderRight: "1px solid rgba(0,0,0,0.08)",
-        boxShadow: "2px 0 16px rgba(0,0,0,0.06)",
+        borderLeft: "1px solid rgba(0,0,0,0.08)",
+        boxShadow: "-2px 0 16px rgba(0,0,0,0.06)",
         paddingTop: 52, // below TopBar
       }}
     >
@@ -332,7 +332,7 @@ export function EngineeringSidebar() {
           className="w-6 h-6 rounded-lg flex items-center justify-center text-[#888] hover:bg-black/06 hover:text-[#1a1a2e] transition-colors"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-            <path d="M8 2L3 6l5 4" />
+            <path d="M4 2l5 4-5 4" />
           </svg>
         </button>
       </div>

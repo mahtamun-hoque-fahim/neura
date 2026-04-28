@@ -40,7 +40,7 @@ export function TopBar({ roomId, isMP }: TopBarProps) {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-[52px] flex items-center justify-between px-4 z-[99] pointer-events-none">
+    <div className="fixed top-0 h-[52px] flex items-center justify-between px-4 z-[99] pointer-events-none" style={{ left: 200, right: 0 }}>
       {/* Left — logo + room badge + mode switcher */}
       <div className="flex items-center gap-2.5 pointer-events-auto">
         <Link
