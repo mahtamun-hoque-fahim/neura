@@ -187,7 +187,7 @@ export function Toolbar() {
   const isOverflowActive = OVERFLOW_TOOLS.some(t => t.id === tool);
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2">
+    <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[98] flex flex-col items-center gap-2">
 
       {/* Main pill */}
       <div
@@ -232,7 +232,7 @@ export function Toolbar() {
 
           {overflowOpen && (
             <div
-              className="absolute bottom-[calc(100%+10px)] right-0 py-1.5 rounded-2xl min-w-[200px] z-[200]"
+              className="absolute top-[calc(100%+10px)] right-0 py-1.5 rounded-2xl min-w-[200px] z-[200]"
               style={{
                 background: "#fff",
                 border: "1px solid rgba(0,0,0,0.09)",
@@ -292,7 +292,7 @@ function ToolBtn({
           {t.key}
         </span>
       )}
-      <span className="absolute bottom-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-[#1a1a2e] text-white text-[11px] px-2 py-1 rounded-lg whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-lg">
+      <span className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-[#1a1a2e] text-white text-[11px] px-2 py-1 rounded-lg whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-lg">
         {t.label}{t.key && <span className="opacity-50 ml-1">({t.key})</span>}
       </span>
     </button>

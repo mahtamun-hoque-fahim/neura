@@ -48,12 +48,12 @@ export default function Landing() {
   ];
 
   const FEATURES = [
-    { icon: "⚡", title: "Instant, no signup", desc: "Open your browser and start drawing immediately. No accounts, no loading screens, no friction." },
-    { icon: "🎨", title: "8 powerful tools", desc: "Pen, highlighter, line, arrow, rectangle, circle, text, and eraser — everything in one clean interface." },
-    { icon: "👥", title: "Real-time collaboration", desc: "Invite anyone with a link. See each other's cursors and strokes live — powered by Liveblocks." },
-    { icon: "✏️", title: "Hand-drawn aesthetic", desc: "Shapes rendered with rough.js for that natural, sketchy whiteboard feel." },
-    { icon: "↩", title: "Collaborative undo", desc: "60-step undo/redo history, synced across all collaborators in the room." },
-    { icon: "⬇️", title: "Export as PNG", desc: "Save your canvas as a crisp PNG with clean padding — ready to share anywhere." },
+    { icon: "01", title: "Instant, no signup", desc: "Open your browser and start drawing immediately. No accounts, no loading screens, no friction." },
+    { icon: "02", title: "8 powerful tools", desc: "Pen, highlighter, line, arrow, rectangle, circle, text, and eraser — everything in one clean interface." },
+    { icon: "03", title: "Real-time collaboration", desc: "Invite anyone with a link. See each other's cursors and strokes live — powered by Liveblocks." },
+    { icon: "04", title: "Hand-drawn aesthetic", desc: "Shapes rendered with rough.js for that natural, sketchy whiteboard feel." },
+    { icon: "05", title: "Collaborative undo", desc: "60-step undo/redo history, synced across all collaborators in the room." },
+    { icon: "06", title: "Export as PNG", desc: "Save your canvas as a crisp PNG with clean padding — ready to share anywhere." },
   ];
 
   return (
@@ -163,7 +163,7 @@ export default function Landing() {
               </svg>
             </div>
             <div className="h-[58px] bg-white border-t border-[#1a7a4a]/8 flex items-center justify-center gap-2">
-              {["✏️","🖊️","╱","→","▭","○","T","◻"].map((icon, i) => (
+              {["Pen","Hi","╱","→","▭","○","T","▢"].map((icon, i) => (
                 <div key={i} className={`w-9 h-9 rounded-[9px] flex items-center justify-center text-sm ${i === 0 ? "bg-[#1a7a4a] text-white" : "bg-[#1a7a4a]/7 text-[#1a7a4a]"}`}>
                   {icon}
                 </div>
@@ -195,7 +195,7 @@ export default function Landing() {
                 className="opacity-0 translate-y-8 transition-all duration-700 bg-white border border-[#1a7a4a]/10 rounded-[18px] p-8 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(26,122,74,.1)] hover:border-[#1a7a4a]/20 transition-all group relative overflow-hidden"
               >
                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#1a7a4a] to-[#2da06a] opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="w-11 h-11 bg-[#e8f5ee] rounded-xl flex items-center justify-center text-xl mb-5">{f.icon}</div>
+                <div className="w-11 h-11 bg-[#e8f5ee] rounded-xl flex items-center justify-center text-xs font-bold text-[#1a7a4a] mb-5 font-mono tracking-tight">{f.icon}</div>
                 <div className="font-syne font-bold text-[17px] text-[#0d1f16] mb-2.5 tracking-tight">{f.title}</div>
                 <div className="text-sm text-[#5a7a68] leading-relaxed">{f.desc}</div>
               </div>
