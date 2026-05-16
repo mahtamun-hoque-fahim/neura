@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useCanvasStore } from "@/lib/store";
 import { CircuitSVG } from "./EngineeringSidebar";
 import type { CircuitSymbol } from "@/lib/liveblocks.config";
@@ -78,7 +78,7 @@ const COMPONENTS: {
 const PRESETS: {
   label: string;
   desc: string;
-  Preview: () => JSX.Element;
+  Preview: () => React.ReactElement;
 }[] = [
   {
     label: "Voltage Divider",
