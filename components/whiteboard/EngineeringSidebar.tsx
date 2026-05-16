@@ -213,6 +213,163 @@ export function CircuitSVG({
           <circle cx="15" cy="15" r="3.5" style={{ fill: color }} />
         </svg>
       );
+    case "potentiometer":
+      return (
+        <svg viewBox="0 0 60 40" width="60" height="40">
+          <line x1="0" y1="20" x2="12" y2="20" {...s} />
+          <polyline points="12,20 15,12 20,28 25,12 30,28 35,12 40,28 43,20 48,20" {...s} />
+          <line x1="48" y1="20" x2="60" y2="20" {...s} />
+          <line x1="30" y1="28" x2="30" y2="40" {...s} />
+          <polyline points="26,38 30,40 34,38" {...s} />
+        </svg>
+      );
+    case "transformer":
+      return (
+        <svg viewBox="0 0 70 40" width="70" height="40">
+          <path d="M5,20 C5,13 11,13 11,20 C11,13 17,13 17,20 C17,13 23,13 23,20 C23,13 29,13 29,20" {...s} />
+          <path d="M41,20 C41,13 47,13 47,20 C47,13 53,13 53,20 C53,13 59,13 59,20 C59,13 65,13 65,20" {...s} />
+          <line x1="29" y1="8" x2="29" y2="32" {...s} />
+          <line x1="41" y1="8" x2="41" y2="32" {...s} />
+          <line x1="0" y1="20" x2="5" y2="20" {...s} />
+          <line x1="65" y1="20" x2="70" y2="20" {...s} />
+        </svg>
+      );
+    case "ac_source":
+      return (
+        <svg viewBox="0 0 60 36" width="60" height="36">
+          <line x1="0" y1="18" x2="12" y2="18" {...s} />
+          <circle cx="30" cy="18" r="16" {...s} />
+          <line x1="48" y1="18" x2="60" y2="18" {...s} />
+          <path d="M22,18 C24,11 27,11 30,18 C33,25 36,25 38,18" {...s} />
+        </svg>
+      );
+    case "battery":
+      return (
+        <svg viewBox="0 0 70 30" width="70" height="30">
+          <line x1="0" y1="15" x2="20" y2="15" {...s} />
+          <line x1="20" y1="6" x2="20" y2="24" {...s} />
+          <line x1="26" y1="10" x2="26" y2="20" {...s} />
+          <line x1="32" y1="6" x2="32" y2="24" {...s} />
+          <line x1="38" y1="10" x2="38" y2="20" {...s} />
+          <line x1="44" y1="6" x2="44" y2="24" {...s} />
+          <line x1="50" y1="10" x2="50" y2="20" {...s} />
+          <line x1="50" y1="15" x2="70" y2="15" {...s} />
+        </svg>
+      );
+    case "zener_diode":
+      return (
+        <svg viewBox="0 0 60 30" width="60" height="30">
+          <line x1="0" y1="15" x2="18" y2="15" {...s} />
+          <polygon points="18,6 18,24 38,15" style={{ fill: color, stroke: color, strokeWidth: 1.5 }} />
+          <path d="M34,6 L38,6 L38,24 L42,24" {...s} />
+          <line x1="38" y1="15" x2="60" y2="15" {...s} />
+        </svg>
+      );
+    case "mosfet_n":
+      return (
+        <svg viewBox="0 0 60 54" width="60" height="54">
+          <line x1="0" y1="27" x2="18" y2="27" {...s} />
+          <line x1="18" y1="12" x2="18" y2="42" {...s} />
+          <line x1="22" y1="12" x2="22" y2="42" {...s} />
+          <line x1="22" y1="15" x2="38" y2="15" {...s} />
+          <line x1="22" y1="27" x2="38" y2="27" {...s} />
+          <line x1="22" y1="39" x2="38" y2="39" {...s} />
+          <line x1="38" y1="15" x2="38" y2="6" {...s} />
+          <line x1="38" y1="39" x2="38" y2="48" {...s} />
+          <line x1="38" y1="6" x2="60" y2="6" {...s} />
+          <line x1="38" y1="48" x2="60" y2="48" {...s} />
+          <polyline points="32,27 38,27 38,30" {...s} />
+        </svg>
+      );
+    case "mosfet_p":
+      return (
+        <svg viewBox="0 0 60 54" width="60" height="54">
+          <line x1="0" y1="27" x2="18" y2="27" {...s} />
+          <line x1="18" y1="12" x2="18" y2="42" {...s} />
+          <line x1="22" y1="12" x2="22" y2="42" {...s} />
+          <line x1="22" y1="15" x2="38" y2="15" {...s} />
+          <line x1="22" y1="27" x2="38" y2="27" {...s} />
+          <line x1="22" y1="39" x2="38" y2="39" {...s} />
+          <line x1="38" y1="15" x2="38" y2="6" {...s} />
+          <line x1="38" y1="39" x2="38" y2="48" {...s} />
+          <line x1="38" y1="6" x2="60" y2="6" {...s} />
+          <line x1="38" y1="48" x2="60" y2="48" {...s} />
+          <circle cx="20" cy="27" r="2" {...f} />
+        </svg>
+      );
+    case "schmitt":
+      return (
+        <svg viewBox="0 0 60 40" width="60" height="40">
+          <polygon points="10,4 10,36 50,20" {...s} />
+          <line x1="0" y1="20" x2="10" y2="20" {...s} />
+          <line x1="50" y1="20" x2="60" y2="20" {...s} />
+          <path d="M22,24 L26,24 L26,20 L30,20 L30,16 L34,16" {...s} strokeWidth={1.2} />
+        </svg>
+      );
+    case "xnor_gate":
+      return (
+        <svg viewBox="0 0 68 40" width="68" height="40">
+          <path d="M12,4 C22,4 42,4 54,20 C42,36 22,36 12,36 C18,28 18,12 12,4 Z" {...s} />
+          <path d="M6,4 C12,12 12,28 6,36" {...s} />
+          <circle cx="58" cy="20" r="4" {...s} />
+          <line x1="0" y1="13" x2="10" y2="13" {...s} />
+          <line x1="0" y1="27" x2="10" y2="27" {...s} />
+          <line x1="62" y1="20" x2="68" y2="20" {...s} />
+        </svg>
+      );
+    case "buffer":
+      return (
+        <svg viewBox="0 0 60 36" width="60" height="36">
+          <polygon points="10,4 10,32 44,18" {...s} />
+          <line x1="0" y1="18" x2="10" y2="18" {...s} />
+          <line x1="44" y1="18" x2="60" y2="18" {...s} />
+        </svg>
+      );
+    case "ammeter":
+      return (
+        <svg viewBox="0 0 60 36" width="60" height="36">
+          <line x1="0" y1="18" x2="12" y2="18" {...s} />
+          <circle cx="30" cy="18" r="16" {...s} />
+          <text x="23" y="22" fontSize="11" fill={color} stroke="none" fontFamily="sans-serif" fontWeight="bold">A</text>
+          <line x1="48" y1="18" x2="60" y2="18" {...s} />
+        </svg>
+      );
+    case "voltmeter":
+      return (
+        <svg viewBox="0 0 60 36" width="60" height="36">
+          <line x1="0" y1="18" x2="12" y2="18" {...s} />
+          <circle cx="30" cy="18" r="16" {...s} />
+          <text x="22" y="23" fontSize="11" fill={color} stroke="none" fontFamily="sans-serif" fontWeight="bold">V</text>
+          <line x1="48" y1="18" x2="60" y2="18" {...s} />
+        </svg>
+      );
+    case "lamp":
+      return (
+        <svg viewBox="0 0 60 36" width="60" height="36">
+          <line x1="0" y1="18" x2="12" y2="18" {...s} />
+          <circle cx="30" cy="18" r="16" {...s} />
+          <path d="M22,26 L38,10 M22,10 L38,26" {...s} />
+          <line x1="48" y1="18" x2="60" y2="18" {...s} />
+        </svg>
+      );
+    case "motor":
+      return (
+        <svg viewBox="0 0 60 36" width="60" height="36">
+          <line x1="0" y1="18" x2="12" y2="18" {...s} />
+          <circle cx="30" cy="18" r="16" {...s} />
+          <text x="23" y="23" fontSize="12" fill={color} stroke="none" fontFamily="sans-serif" fontWeight="bold">M</text>
+          <line x1="48" y1="18" x2="60" y2="18" {...s} />
+        </svg>
+      );
+    case "fuse":
+      return (
+        <svg viewBox="0 0 60 30" width="60" height="30">
+          <line x1="0" y1="15" x2="12" y2="15" {...s} />
+          <rect x="12" y="8" width="36" height="14" rx="3" {...s} />
+          <line x1="48" y1="15" x2="60" y2="15" {...s} />
+          <line x1="20" y1="15" x2="40" y2="15" {...s} strokeWidth={1.2} />
+        </svg>
+      );
     default:
       return <svg viewBox="0 0 60 30" width="60" height="30"><rect x="5" y="5" width="50" height="20" {...s} /></svg>;
   }

@@ -7,6 +7,7 @@ import { Toolbar }           from "./Toolbar";
 import { TopBar }            from "./TopBar";
 import { LiveCursors }       from "./LiveCursors";
 import { EngineeringSidebar } from "./EngineeringSidebar";
+import { LibrarySidebar }     from "./LibrarySidebar";
 import { PropertiesPanel }   from "./PropertiesPanel";
 import { ShortcutsModal }   from "./ShortcutsModal";
 import { BottomBar }       from "./BottomBar";
@@ -61,8 +62,11 @@ function Board({ roomId, isMP }: { roomId: string; isMP: boolean }) {
       {/* Properties panel — always on left */}
       <PropertiesPanel onLayerChange={action => window.dispatchEvent(new CustomEvent("neura:layer", { detail: action }))} />
 
-      {/* Engineering sidebar — on right in engineering mode */}
+      {/* Engineering sidebar (engineering mode) */}
       {mode === "engineering" && <EngineeringSidebar />}
+
+      {/* Circuit library sidebar — accessible from TopBar toggle */}
+      <LibrarySidebar />
 
       <Canvas />
       <LiveCursors />

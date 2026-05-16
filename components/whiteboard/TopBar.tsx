@@ -3,9 +3,21 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useCanvasStore } from "@/lib/store";
+
 import { useCanUndo, useCanRedo, useOthers } from "@/lib/liveblocks.config";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
+function IconLibrary() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="5" height="5" rx="1" />
+      <rect x="9" y="2" width="5" height="5" rx="1" />
+      <rect x="2" y="9" width="5" height="5" rx="1" />
+      <rect x="9" y="9" width="5" height="5" rx="1" />
+    </svg>
+  );
+}
+
 function IconMenu() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
@@ -104,7 +116,7 @@ function MenuItem({
 
 // ── Main TopBar ───────────────────────────────────────────────────────────────
 export function TopBar({ roomId, isMP }: { roomId: string; isMP: boolean }) {
-  const { nick, setNick } = useCanvasStore();
+  const { nick, setNick, libraryOpen, setLibraryOpen } = useCanvasStore();
   const others = useOthers();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -215,6 +227,21 @@ export function TopBar({ roomId, isMP }: { roomId: string; isMP: boolean }) {
             </>
           ) : "solo"}
         </div>
+
+        {/* Library toggle */}
+        <button
+          onClick={() => setLibraryOpen(!libraryOpen)}
+          title="Circuit library"
+          className="w-8 h-[32px] rounded-xl flex items-center justify-center transition-colors"
+          style={{
+            background: libraryOpen ? "#6c63ff" : "rgba(255,255,255,0.9)",
+            border: libraryOpen ? "1px solid #6c63ff" : "1px solid rgba(0,0,0,0.09)",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+            color: libraryOpen ? "#fff" : "#555",
+          }}
+        >
+          <IconLibrary />
+        </button>
 
         {/* Share button */}
         {isMP ? (

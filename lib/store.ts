@@ -27,6 +27,7 @@ interface CanvasStore {
   userColor: string;
   mode: Mode;
   sidebarOpen: boolean;      // engineering sidebar
+  libraryOpen: boolean;      // right library panel
   setTool: (t: Tool) => void;
   setColor: (c: string) => void;
   setFillColor: (c: string) => void;
@@ -38,6 +39,7 @@ interface CanvasStore {
   setNick: (n: string) => void;
   setMode: (m: Mode) => void;
   setSidebarOpen: (o: boolean) => void;
+  setLibraryOpen: (o: boolean) => void;
 }
 
 export const useCanvasStore = create<CanvasStore>(() => ({
@@ -53,6 +55,7 @@ export const useCanvasStore = create<CanvasStore>(() => ({
   userColor: USER_COLORS[Math.floor(Math.random() * USER_COLORS.length)],
   mode: "normal",
   sidebarOpen: true,
+  libraryOpen: false,
   setTool:        (tool)        => useCanvasStore.setState({ tool }),
   setColor:       (color)       => useCanvasStore.setState({ color }),
   setFillColor:   (fillColor)   => useCanvasStore.setState({ fillColor }),
@@ -64,4 +67,5 @@ export const useCanvasStore = create<CanvasStore>(() => ({
   setNick:        (nick)        => useCanvasStore.setState({ nick }),
   setMode:        (mode)        => useCanvasStore.setState({ mode }),
   setSidebarOpen: (sidebarOpen) => useCanvasStore.setState({ sidebarOpen }),
+  setLibraryOpen:  (libraryOpen)  => useCanvasStore.setState({ libraryOpen }),
 }));

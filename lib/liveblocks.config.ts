@@ -2,11 +2,12 @@ import { createClient, LiveList } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 export type CircuitSymbol =
-  | "resistor" | "capacitor" | "inductor"
-  | "voltage_source" | "current_source" | "ground" | "vcc"
-  | "diode" | "led" | "transistor_npn" | "transistor_pnp" | "op_amp"
-  | "and_gate" | "or_gate" | "not_gate" | "nand_gate" | "nor_gate" | "xor_gate"
-  | "switch" | "wire_node";
+  | "resistor" | "capacitor" | "inductor" | "potentiometer" | "transformer"
+  | "voltage_source" | "current_source" | "ground" | "vcc" | "ac_source" | "battery"
+  | "diode" | "led" | "zener_diode" | "transistor_npn" | "transistor_pnp"
+  | "mosfet_n" | "mosfet_p" | "op_amp" | "schmitt"
+  | "and_gate" | "or_gate" | "not_gate" | "nand_gate" | "nor_gate" | "xor_gate" | "xnor_gate" | "buffer"
+  | "switch" | "wire_node" | "motor" | "lamp" | "fuse" | "ammeter" | "voltmeter";
 
 export type StrokeElement = {
   id: string;
