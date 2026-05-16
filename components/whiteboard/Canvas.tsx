@@ -45,6 +45,33 @@ function simplifyPath(pts: [number, number][], tolerance = 1.5): [number, number
   return [pts[0], pts[pts.length - 1]];
 }
 
+// ── Fit viewport to show all elements ────────────────────────────────────────
+function fitViewport(
+  elements: readonly StrokeElement[] | null,
+  canvasW: number,
+  canvasH: number,
+  padding = 60
+): { x: number; y: number; scale: number } {
+  if (!elements || elements.length === 0) return { x: 0, y: 0, scale: 1 };
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const el of elements) {
+    const bb = getBBox(el);
+    minX = Math.min(minX, bb.x); minY = Math.min(minY, bb.y);
+    maxX = Math.max(maxX, bb.x + bb.w); maxY = Math.max(maxY, bb.y + bb.h);
+  }
+  if (minX === Infinity) return { x: 0, y: 0, scale: 1 };
+  const contentW = maxX - minX || 1;
+  const contentH = maxY - minY || 1;
+  const scale = Math.min(
+    (canvasW - padding * 2) / contentW,
+    (canvasH - padding * 2) / contentH,
+    2 // max scale when fitting
+  );
+  const x = (canvasW - contentW * scale) / 2 - minX * scale;
+  const y = (canvasH - contentH * scale) / 2 - minY * scale;
+  return { x, y, scale };
+}
+
 // ── Laser trail point ─────────────────────────────────────────────────────────
 interface LaserPt { x: number; y: number; t: number; }
 
@@ -145,6 +172,7 @@ export function Canvas() {
   const pendingElementsRef = useRef<StrokeElement[]>([]);
 
   const [textPos, setTextPos] = useState<{ wx: number; wy: number } | null>(null);
+  const [contentOffscreen, setContentOffscreen] = useState(false);
   const textRef = useRef<HTMLTextAreaElement>(null);
 
   // Image file input (hidden)
@@ -308,6 +336,24 @@ export function Canvas() {
     if (el) el.textContent = `${Math.round(scale * 100)}%`;
   };
 
+  const checkContentVisible = useCallback(() => {
+    const els = elementsRef.current;
+    const canvas = staticRef.current;
+    if (!els || els.length === 0 || !canvas) { setContentOffscreen(false); return; }
+    const vp = vpRef.current;
+    let anyVisible = false;
+    for (const el of els) {
+      const bb = getBBox(el);
+      const [sx, sy] = worldToScreen(bb.x, bb.y, vp);
+      const [ex, ey] = worldToScreen(bb.x + bb.w, bb.y + bb.h, vp);
+      if (ex > 0 && sx < canvas.width && ey > 0 && sy < canvas.height) {
+        anyVisible = true;
+        break;
+      }
+    }
+    setContentOffscreen(!anyVisible);
+  }, []);
+
   // Also update on wheel zoom
   // ── Update DOM overlays ───────────────────────────────────────────────────
   const updateDomOverlays = useCallback(() => {
@@ -395,18 +441,22 @@ export function Canvas() {
         renderEl(el, ctx, rc);
       }
     }
-    // Render optimistic pending elements (local-only, not yet in storage)
-    ctx.save();
-    ctx.translate(vp.x, vp.y);
-    ctx.scale(vp.scale, vp.scale);
-    for (const el of pendingElementsRef.current) {
-      renderEl(el, ctx, rc);
-    }
-    ctx.restore();
+    ctx.restore(); // end elements block
 
-    ctx.restore();
+    // Render optimistic pending elements (separate clean block, correct transform)
+    if (pendingElementsRef.current.length > 0) {
+      ctx.save();
+      ctx.translate(vp.x, vp.y);
+      ctx.scale(vp.scale, vp.scale);
+      for (const el of pendingElementsRef.current) {
+        renderEl(el, ctx, rc);
+      }
+      ctx.restore();
+    }
+
     updateDomOverlays();
-  }, [renderEl, updateDomOverlays]);
+    checkContentVisible();
+  }, [renderEl, updateDomOverlays, checkContentVisible]);
 
   useEffect(() => {
     // Storage updated — clear optimistic buffer since elements are now in storage
@@ -417,9 +467,17 @@ export function Canvas() {
   // ── Init + resize ─────────────────────────────────────────────────────────
   useEffect(() => {
     const resize = () => {
+      const needsReset =
+        staticRef.current &&
+        (staticRef.current.width !== window.innerWidth || staticRef.current.height !== window.innerHeight);
       [staticRef, previewRef, lassoRef].forEach(r => {
         if (r.current) { r.current.width = window.innerWidth; r.current.height = window.innerHeight; }
       });
+      // Recreate RoughJS instances — setting canvas.width resets the 2D context
+      if (needsReset) {
+        if (staticRef.current)  rcStaticRef.current  = rough.canvas(staticRef.current);
+        if (previewRef.current) rcPreviewRef.current = rough.canvas(previewRef.current);
+      }
       redrawStatic();
     };
     resize();
@@ -514,58 +572,117 @@ export function Canvas() {
     laserRafRef.current = requestAnimationFrame(drawLaser);
   }, []);
 
-  // ── Drag-drop circuit from sidebar ────────────────────────────────────────
+  // ── Image placement helpers ───────────────────────────────────────────────
+  const placeImageFile = useCallback((file: File, wx: number, wy: number): Promise<void> => {
+    return new Promise(resolve => {
+      if (!file.type.startsWith("image/")) { resolve(); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const src = reader.result as string;
+        const img = new Image();
+        img.onload = () => {
+          const maxW = 500, maxH = 400;
+          const scale = Math.min(1, maxW / img.width, maxH / img.height);
+          const w = img.width * scale, h = img.height * scale;
+          addElement({
+            id: crypto.randomUUID(), type: "image",
+            color: useCanvasStore.getState().color,
+            size: 1, alpha: 1, seed: 0,
+            x: wx - w / 2, y: wy - h / 2, w, h, src,
+          });
+          resolve();
+        };
+        img.src = src;
+      };
+      reader.readAsDataURL(file);
+    });
+  }, [addElement]);
+
+  const handleImageFile = useCallback((file: File) => {
+    const pos = pendingImagePosRef.current ?? { wx: 100, wy: 100 };
+    placeImageFile(file, pos.wx, pos.wy).then(() => {
+      pendingImagePosRef.current = null;
+    });
+  }, [placeImageFile]);
+
+  // ── Drag-drop: circuit symbols + image files from OS ────────────────────────
   useEffect(() => {
     const canvas = previewRef.current;
     if (!canvas) return;
+
     const onDragOver = (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes("neura/circuit-symbol")) {
-        e.preventDefault(); e.dataTransfer.dropEffect = "copy";
+      const types = e.dataTransfer?.types ?? [];
+      const isAccepted =
+        types.includes("neura/circuit-symbol") ||
+        types.includes("neura/circuit-preset") ||
+        types.includes("Files") ||
+        [...types].some(t => t.startsWith("image"));
+      if (isAccepted) {
+        e.preventDefault();
+        e.dataTransfer!.dropEffect = "copy";
       }
     };
-    const onDrop = (e: DragEvent) => {
+
+    const onDrop = async (e: DragEvent) => {
       e.preventDefault();
-      const symbol = e.dataTransfer?.getData("neura/circuit-symbol") as CircuitSymbol | undefined;
-      if (!symbol) return;
       const r = canvas.getBoundingClientRect();
       const [wx, wy] = screenToWorld(e.clientX - r.left, e.clientY - r.top, vpRef.current);
-      const sw = 80, sh = 50;
-      addElement({
-        id: crypto.randomUUID(), type: "circuit",
-        color: useCanvasStore.getState().color,
-        size: 2, alpha: 1, seed: 0,
-        symbol, sx: wx - sw / 2, sy: wy - sh / 2, sw, sh,
-      });
+
+      // ── Circuit symbol from library sidebar ──
+      const symbol = e.dataTransfer?.getData("neura/circuit-symbol") as CircuitSymbol | undefined;
+      if (symbol) {
+        const sw = 80, sh = 50;
+        addElement({
+          id: crypto.randomUUID(), type: "circuit",
+          color: useCanvasStore.getState().color,
+          size: 2, alpha: 1, seed: 0,
+          symbol, sx: wx - sw / 2, sy: wy - sh / 2, sw, sh,
+        });
+        return;
+      }
+
+      // ── Image file from OS file explorer ──
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          if (!file.type.startsWith("image/")) continue;
+          // Stagger placement for multiple images
+          const offsetX = i * 20, offsetY = i * 20;
+          await placeImageFile(file, wx + offsetX, wy + offsetY);
+        }
+        return;
+      }
+
+      // ── Image URL dragged from browser ──
+      const imgUrl = e.dataTransfer?.getData("text/uri-list") || e.dataTransfer?.getData("text/plain");
+      if (imgUrl && (imgUrl.startsWith("http") || imgUrl.startsWith("data:image"))) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          const maxW = 400, maxH = 300;
+          const scale = Math.min(1, maxW / img.width, maxH / img.height);
+          addElement({
+            id: crypto.randomUUID(), type: "image",
+            color: useCanvasStore.getState().color,
+            size: 1, alpha: 1, seed: 0,
+            x: wx - (img.width * scale) / 2,
+            y: wy - (img.height * scale) / 2,
+            w: img.width * scale, h: img.height * scale,
+            src: imgUrl,
+          });
+        };
+        img.src = imgUrl;
+      }
     };
+
     canvas.addEventListener("dragover", onDragOver);
     canvas.addEventListener("drop", onDrop);
-    return () => { canvas.removeEventListener("dragover", onDragOver); canvas.removeEventListener("drop", onDrop); };
-  }, [addElement]);
-
-  // ── Image file input handler ──────────────────────────────────────────────
-  const handleImageFile = useCallback((file: File) => {
-    if (!file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const src = reader.result as string;
-      const img = new Image();
-      img.onload = () => {
-        const pos = pendingImagePosRef.current ?? { wx: 100, wy: 100 };
-        const maxW = 400, maxH = 300;
-        const scale = Math.min(1, maxW / img.width, maxH / img.height);
-        addElement({
-          id: crypto.randomUUID(), type: "image",
-          color, size: 1, alpha: 1, seed: 0,
-          x: pos.wx, y: pos.wy,
-          w: img.width * scale, h: img.height * scale,
-          src,
-        });
-        pendingImagePosRef.current = null;
-      };
-      img.src = src;
+    return () => {
+      canvas.removeEventListener("dragover", onDragOver);
+      canvas.removeEventListener("drop", onDrop);
     };
-    reader.readAsDataURL(file);
-  }, [addElement, color]);
+  }, [addElement, placeImageFile]);
 
   // ── Pointer helpers ───────────────────────────────────────────────────────
   const getScreen = (e: React.PointerEvent<HTMLCanvasElement>): [number, number] => {
@@ -894,9 +1011,16 @@ export function Canvas() {
       a.download = `neura-${Date.now()}.png`; a.href = tmp.toDataURL(); a.click();
     };
     const onZoomReset = () => {
-      vpRef.current = { x: 0, y: 0, scale: 1 };
+      // Fit to content if there are elements, else reset to origin
+      const els = elementsRef.current;
+      const canvas = staticRef.current;
+      if (els && els.length > 0 && canvas) {
+        vpRef.current = fitViewport([...els], canvas.width, canvas.height);
+      } else {
+        vpRef.current = { x: 0, y: 0, scale: 1 };
+      }
       redrawStatic();
-      updateZoomDisplay(1);
+      updateZoomDisplay(vpRef.current.scale);
     };
     const onZoom = (e: Event) => {
       const factor = (e as CustomEvent<number>).detail;
@@ -996,6 +1120,33 @@ export function Canvas() {
       ))}
 
       {/* Frame label prompt — shows when a frame is newly placed and selected */}
+
+      {/* Scroll back to content */}
+      {contentOffscreen && (
+        <button
+          onClick={() => {
+            const els = elementsRef.current;
+            const canvas = staticRef.current;
+            if (els && canvas) {
+              vpRef.current = fitViewport([...els], canvas.width, canvas.height);
+              redrawStatic();
+              updateZoomDisplay(vpRef.current.scale);
+            }
+          }}
+          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[150] flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[13px] font-medium transition-all hover:-translate-y-0.5 hover:shadow-lg"
+          style={{
+            background: "#fff",
+            border: "1px solid rgba(0,0,0,0.10)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+            color: "#1a1a2e",
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M7 2v10M2 7l5 5 5-5" />
+          </svg>
+          Scroll back to content
+        </button>
+      )}
 
       {/* Text textarea */}
       {textPos && textScreenPos && (
