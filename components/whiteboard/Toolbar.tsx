@@ -146,19 +146,19 @@ function IconMore() {
 // ── Tool definitions ───────────────────────────────────────────────────────────
 // key shown as subscript on the button
 const MAIN_TOOLS: { id: Tool; Icon: React.FC; label: string; key: string }[] = [
-  { id: "lock",      Icon: IconLock,      label: "Lock",       key: ""  },
-  { id: "hand",      Icon: IconHand,      label: "Hand",       key: "H" },
-  { id: "select",    Icon: IconSelect,    label: "Select",     key: "V" },
-  { id: "rect",      Icon: IconRect,      label: "Rectangle",  key: "R" },
-  { id: "diamond",   Icon: IconDiamond,   label: "Diamond",    key: "D" },
-  { id: "circle",    Icon: IconCircle,    label: "Circle",     key: "O" },
-  { id: "arrow",     Icon: IconArrow,     label: "Arrow",      key: "A" },
-  { id: "line",      Icon: IconLine,      label: "Line",       key: "L" },
-  { id: "pen",       Icon: IconPen,       label: "Pen",        key: "P" },
-  { id: "text",      Icon: IconText,      label: "Text",       key: "T" },
-  { id: "image",     Icon: IconImage,     label: "Image",      key: "I" },
-  { id: "eraser",    Icon: IconEraser,    label: "Eraser",     key: "E" },
-  { id: "connector", Icon: IconConnector, label: "Connector",  key: "C" },
+  { id: "lock",      Icon: IconLock,      label: "Lock",        key: ""  },
+  { id: "hand",      Icon: IconHand,      label: "Hand",        key: "H" },
+  { id: "select",    Icon: IconSelect,    label: "Select",      key: "V" },
+  { id: "rect",      Icon: IconRect,      label: "Rectangle",   key: "R" },
+  { id: "diamond",   Icon: IconDiamond,   label: "Diamond",     key: "D" },
+  { id: "circle",    Icon: IconCircle,    label: "Circle",      key: "O" },
+  { id: "arrow",     Icon: IconArrow,     label: "Arrow",       key: "A" },
+  { id: "line",      Icon: IconLine,      label: "Line",        key: "L" },
+  { id: "pen",       Icon: IconPen,       label: "Pen",         key: "P" },
+  { id: "text",      Icon: IconText,      label: "Text",        key: "T" },
+  { id: "image",     Icon: IconImage,     label: "Image",       key: "I" },
+  { id: "eraser",    Icon: IconEraser,    label: "Eraser",      key: "E" },
+  { id: "connector", Icon: IconConnector, label: "Connector",   key: "C" },
 ];
 
 const OVERFLOW_TOOLS: { id: Tool; Icon: React.FC; label: string; key?: string }[] = [

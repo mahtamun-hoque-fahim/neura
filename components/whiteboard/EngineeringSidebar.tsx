@@ -226,7 +226,7 @@ const CATEGORIES: {
 }[] = [
   {
     label: "Sources",
-    emoji: "⚡",
+    emoji: "src",
     items: [
       { symbol: "voltage_source", label: "Voltage Source" },
       { symbol: "current_source", label: "Current Source" },
@@ -236,7 +236,7 @@ const CATEGORIES: {
   },
   {
     label: "Passive",
-    emoji: "〰",
+    emoji: "pas",
     items: [
       { symbol: "resistor",  label: "Resistor" },
       { symbol: "capacitor", label: "Capacitor" },
@@ -246,7 +246,7 @@ const CATEGORIES: {
   },
   {
     label: "Semiconductors",
-    emoji: "💡",
+    emoji: "sem",
     items: [
       { symbol: "diode",           label: "Diode" },
       { symbol: "led",             label: "LED" },
@@ -257,7 +257,7 @@ const CATEGORIES: {
   },
   {
     label: "Logic Gates",
-    emoji: "🔲",
+    emoji: "log",
     items: [
       { symbol: "and_gate",  label: "AND" },
       { symbol: "or_gate",   label: "OR" },
@@ -269,7 +269,7 @@ const CATEGORIES: {
   },
   {
     label: "Wiring",
-    emoji: "🔗",
+    emoji: "con",
     items: [
       { symbol: "wire_node", label: "Junction" },
     ],
@@ -351,7 +351,7 @@ export function EngineeringSidebar() {
               onClick={() => toggleCategory(cat.label)}
               className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-black/03 transition-colors"
             >
-              <span className="text-[13px]">{cat.emoji}</span>
+              <span className="text-[9px] font-bold tracking-wide uppercase opacity-50">{cat.emoji}</span>
               <span className="text-[11.5px] font-semibold text-[#444] flex-1">{cat.label}</span>
               <svg
                 width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#aaa" strokeWidth="1.7" strokeLinecap="round"
