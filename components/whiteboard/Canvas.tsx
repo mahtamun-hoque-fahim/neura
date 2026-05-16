@@ -23,6 +23,28 @@ function screenToWorld(sx: number, sy: number, vp: Viewport): [number, number] {
   return [(sx - vp.x) / vp.scale, (sy - vp.y) / vp.scale];
 }
 
+// ── Path simplification (Ramer-Douglas-Peucker) ──────────────────────────────
+function simplifyPath(pts: [number, number][], tolerance = 1.5): [number, number][] {
+  if (pts.length <= 2) return pts;
+  const [x1, y1] = pts[0];
+  const [x2, y2] = pts[pts.length - 1];
+  const len = Math.hypot(x2 - x1, y2 - y1);
+  let maxDist = 0, maxIdx = 0;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const [x, y] = pts[i];
+    const dist = len === 0
+      ? Math.hypot(x - x1, y - y1)
+      : Math.abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) / len;
+    if (dist > maxDist) { maxDist = dist; maxIdx = i; }
+  }
+  if (maxDist > tolerance) {
+    const left  = simplifyPath(pts.slice(0, maxIdx + 1), tolerance);
+    const right = simplifyPath(pts.slice(maxIdx), tolerance);
+    return [...left.slice(0, -1), ...right];
+  }
+  return [pts[0], pts[pts.length - 1]];
+}
+
 // ── Laser trail point ─────────────────────────────────────────────────────────
 interface LaserPt { x: number; y: number; t: number; }
 
@@ -118,6 +140,10 @@ export function Canvas() {
   const laserRafRef       = useRef<number>(0);
   const isLaserDrawingRef = useRef(false);
 
+  // Optimistic elements: committed locally but not yet confirmed by Liveblocks storage.
+  // These render on top of storage-driven elements so the local user sees no latency.
+  const pendingElementsRef = useRef<StrokeElement[]>([]);
+
   const [textPos, setTextPos] = useState<{ wx: number; wy: number } | null>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
 
@@ -165,6 +191,25 @@ export function Canvas() {
     if (idx !== -1) list.delete(idx);
   }, []);
 
+  // Eraser: delete elements whose paths intersect the erase stroke
+  const eraseElements = useMutation(({ storage }, erasePts: [number, number][], eraseSize: number) => {
+    const list = storage.get("elements");
+    const PAD  = eraseSize * 2;
+    const toDelete: number[] = [];
+    for (let i = list.length - 1; i >= 0; i--) {
+      const el = list.get(i)!;
+      if (el.type === "erase") continue; // skip erase markers
+      for (const [ex, ey] of erasePts) {
+        if (hitTest(el, ex, ey) || (el.pts ?? []).some(([px, py]) => Math.hypot(px - ex, py - ey) < PAD)) {
+          toDelete.push(i);
+          break;
+        }
+      }
+    }
+    // Delete in reverse order to keep indices valid
+    for (const idx of toDelete) list.delete(idx);
+  }, []);
+
   const layerElement = useMutation(({ storage }, id: string, action: "toBottom"|"down"|"up"|"toTop") => {
     const list  = storage.get("elements");
     const idx   = list.findIndex(e => e.id === id);
@@ -209,6 +254,8 @@ export function Canvas() {
         }
         break;
       case "erase":
+        // Legacy: erase strokes stored as background-color paint
+        // New eraser directly deletes elements, but we keep this for old data
         if (el.pts && el.pts.length > 1) {
           ctx.strokeStyle = "#f5f0e8"; ctx.lineWidth = el.size * 2;
           ctx.beginPath(); ctx.moveTo(el.pts[0][0], el.pts[0][1]);
@@ -348,12 +395,24 @@ export function Canvas() {
         renderEl(el, ctx, rc);
       }
     }
+    // Render optimistic pending elements (local-only, not yet in storage)
+    ctx.save();
+    ctx.translate(vp.x, vp.y);
+    ctx.scale(vp.scale, vp.scale);
+    for (const el of pendingElementsRef.current) {
+      renderEl(el, ctx, rc);
+    }
     ctx.restore();
 
+    ctx.restore();
     updateDomOverlays();
   }, [renderEl, updateDomOverlays]);
 
-  useEffect(() => { redrawStatic(); }, [elements, redrawStatic]);
+  useEffect(() => {
+    // Storage updated — clear optimistic buffer since elements are now in storage
+    pendingElementsRef.current = [];
+    redrawStatic();
+  }, [elements, redrawStatic]);
 
   // ── Init + resize ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -640,10 +699,19 @@ export function Canvas() {
         ctx.lineWidth = strokeSize * 3; ctx.globalAlpha = 0.35;
         ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
         pts.forEach(([px, py]) => ctx.lineTo(px, py)); ctx.stroke(); break;
-      case "eraser":
-        ctx.strokeStyle = "#f5f0e8"; ctx.lineWidth = strokeSize * 2;
-        ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
-        pts.forEach(([px, py]) => ctx.lineTo(px, py)); ctx.stroke(); break;
+      case "eraser": {
+        // Show erase circle cursor at current position
+        const ep = pts[pts.length - 1];
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(ep[0], ep[1], strokeSize * 2, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(100,100,100,0.5)";
+        ctx.lineWidth = 1 / vp.scale;
+        ctx.setLineDash([4 / vp.scale, 3 / vp.scale]);
+        ctx.stroke();
+        ctx.restore();
+        break;
+      }
       case "line":      rc.line(swx, swy, wx, wy, ro); break;
       case "connector": rc.line(swx, swy, wx, wy, { ...ro, roughness: 0 }); break;
       case "arrow": {
@@ -740,9 +808,12 @@ export function Canvas() {
 
     let el: StrokeElement | null = null;
     switch (tool) {
-      case "pen":         if (pts.length > 1) el = { id: crypto.randomUUID(), type: "path",    color, fillColor, size: strokeSize,     alpha: opacity/100, seed, pts, strokeStyle, roughness, roundEdges: edgeStyle==="round" }; break;
-      case "highlighter": if (pts.length > 1) el = { id: crypto.randomUUID(), type: "path",    color, fillColor, size: strokeSize * 3, alpha: 0.35, seed, pts, strokeStyle, roughness }; break;
-      case "eraser":      if (pts.length > 1) el = { id: crypto.randomUUID(), type: "erase",   color: "#f5f0e8", size: strokeSize, alpha: 1, seed, pts }; break;
+      case "pen":         if (pts.length > 1) el = { id: crypto.randomUUID(), type: "path",    color, fillColor, size: strokeSize,     alpha: opacity/100, seed, pts: simplifyPath(pts, 1.0), strokeStyle, roughness, roundEdges: edgeStyle==="round" }; break;
+      case "highlighter": if (pts.length > 1) el = { id: crypto.randomUUID(), type: "path",    color, fillColor, size: strokeSize * 3, alpha: 0.35, seed, pts: simplifyPath(pts, 1.0), strokeStyle, roughness }; break;
+      case "eraser":
+        // Erase = delete all elements touched by the stroke path
+        if (pts.length > 1) eraseElements(pts, strokeSize);
+        break;
       case "line":        el = { id: crypto.randomUUID(), type: "line",    color, fillColor, size: strokeSize, alpha: opacity/100, seed, x1: swx, y1: swy, x2: wx, y2: wy, strokeStyle, roughness }; break;
       case "connector":   el = { id: crypto.randomUUID(), type: "line",    color, fillColor, size: strokeSize, alpha: opacity/100, seed: 0, x1: swx, y1: swy, x2: wx, y2: wy, strokeStyle, roughness: 0 }; break;
       case "arrow":       el = { id: crypto.randomUUID(), type: "arrow",   color, fillColor, size: strokeSize, alpha: opacity/100, seed, x1: swx, y1: swy, x2: wx, y2: wy, strokeStyle, roughness }; break;
@@ -753,18 +824,11 @@ export function Canvas() {
     }
 
     if (el) {
-      const sc = staticRef.current;
-      if (!sc) return;
-      if (!rcStaticRef.current) rcStaticRef.current = rough.canvas(sc);
-      const rc = rcStaticRef.current;
-      if (rc) {
-        const ctx = sc.getContext("2d")!;
-        const vp  = vpRef.current;
-        ctx.save();
-        ctx.translate(vp.x, vp.y); ctx.scale(vp.scale, vp.scale);
-        renderEl(el, ctx, rc);
-        ctx.restore();
-      }
+      // Add to optimistic local buffer so the local user sees it instantly.
+      // When Liveblocks storage updates (useEffect[elements] → redrawStatic),
+      // the element will come back from storage, so we clear the pending buffer.
+      pendingElementsRef.current = [...pendingElementsRef.current, el];
+      requestAnimationFrame(redrawStatic);
       addElement(el);
     }
   };
