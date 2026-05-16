@@ -47,7 +47,7 @@ export function BottomBar() {
   return (
     <div
       className="fixed bottom-5 z-[200] flex items-center gap-3"
-      style={{ left: 196 + 16 }}
+      style={{ left: 228 }}
     >
       {/* Zoom controls */}
       <div className="flex items-center rounded-xl overflow-hidden" style={pill}>

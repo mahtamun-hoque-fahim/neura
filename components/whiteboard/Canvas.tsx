@@ -926,9 +926,7 @@ export function Canvas() {
   };
 
   const textScreenPos = textPos ? worldToScreen(textPos.wx, textPos.wy, vpRef.current) : null;
-  const propsPanelWidth = 196;
   const engSidebarWidth = mode === "engineering" && sidebarOpen ? 220 : 0;
-  const sidebarWidth = propsPanelWidth;
 
   const cursorStyle =
     tool === "lock"    ? "cursor-not-allowed" :
@@ -941,7 +939,7 @@ export function Canvas() {
     "cursor-crosshair";
 
   return (
-    <div className="absolute inset-0" style={{ left: propsPanelWidth, right: engSidebarWidth }}>
+    <div className="absolute inset-0" style={{ left: 0, right: engSidebarWidth }}>
       {/* Hidden image file input */}
       <input
         ref={fileInputRef}

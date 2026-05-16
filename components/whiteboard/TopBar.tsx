@@ -160,8 +160,8 @@ export function TopBar({ roomId, isMP }: { roomId: string; isMP: boolean }) {
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 h-[52px] z-[99] flex items-center justify-between px-3 pointer-events-none"
-      style={{ left: 196 }}
+      className="fixed top-0 left-0 right-0 h-[52px] z-[99] flex items-center justify-between pointer-events-none"
+      style={{ paddingLeft: 8, paddingRight: 12 }}
     >
       {/* Left — hamburger menu */}
       <div ref={menuRef} className="relative pointer-events-auto">

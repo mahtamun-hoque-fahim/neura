@@ -2,48 +2,45 @@
 
 import { useCanvasStore, type StrokeStyle, type EdgeStyle } from "@/lib/store";
 
+// ── Color palettes ────────────────────────────────────────────────────────────
 const STROKE_COLORS = [
-  "#1e1e1e", "#e03131", "#2f9e44", "#1971c2", "#f08c00",
-  "#ae3ec9", "#e64980", "#343a40",
+  "#1e1e1e", "#e03131", "#2f9e44", "#1971c2", "#f08c00", "#1e1e1e",
 ];
 
-const FILL_COLORS = [
+const BG_COLORS = [
   { value: "",        checker: true  },
   { value: "#ffc9c9", checker: false },
   { value: "#b2f2bb", checker: false },
   { value: "#a5d8ff", checker: false },
   { value: "#ffec99", checker: false },
-  { value: "#f3f0ff", checker: false },
+  { value: "#fcc2d7", checker: false },
 ];
 
-function IcoToBottom() {
-  return (
+// ── Layer icons ───────────────────────────────────────────────────────────────
+const LayerIcons = {
+  toBottom: () => (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="7" y1="1" x2="7" y2="10" /><polyline points="4,7 7,10 10,7" /><line x1="2" y1="13" x2="12" y2="13" />
+      <line x1="7" y1="1" x2="7" y2="9"/><polyline points="4,6 7,9 10,6"/>
+      <line x1="2" y1="12" x2="12" y2="12"/>
     </svg>
-  );
-}
-function IcoDown() {
-  return (
+  ),
+  down: () => (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="7" y1="2" x2="7" y2="12" /><polyline points="4,9 7,12 10,9" />
+      <line x1="7" y1="2" x2="7" y2="11"/><polyline points="4,8 7,11 10,8"/>
     </svg>
-  );
-}
-function IcoUp() {
-  return (
+  ),
+  up: () => (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="7" y1="12" x2="7" y2="2" /><polyline points="4,5 7,2 10,5" />
+      <line x1="7" y1="11" x2="7" y2="2"/><polyline points="4,5 7,2 10,5"/>
     </svg>
-  );
-}
-function IcoToTop() {
-  return (
+  ),
+  toTop: () => (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="2" y1="1" x2="12" y2="1" /><line x1="7" y1="13" x2="7" y2="4" /><polyline points="4,7 7,4 10,7" />
+      <line x1="2" y1="2" x2="12" y2="2"/>
+      <line x1="7" y1="12" x2="7" y2="4"/><polyline points="4,7 7,4 10,7"/>
     </svg>
-  );
-}
+  ),
+};
 
 export function PropertiesPanel({
   onLayerChange,
@@ -62,256 +59,326 @@ export function PropertiesPanel({
 
   return (
     <div
-      className="fixed left-0 top-0 bottom-0 z-[89] flex flex-col select-none overflow-y-auto"
-      style={{
-        width: 196,
-        paddingTop: 52,
-        paddingBottom: 80,
-        background: "#fff",
-        borderRight: "1px solid rgba(0,0,0,0.08)",
-        boxShadow: "2px 0 8px rgba(0,0,0,0.04)",
-        scrollbarWidth: "none",
-      }}
+      className="fixed z-[88] select-none"
+      style={{ left: 8, top: 60, bottom: 72, width: 208, pointerEvents: "none" }}
     >
+      <div
+        className="flex flex-col gap-0 overflow-y-auto"
+        style={{
+          maxHeight: "100%",
+          background: "#fff",
+          borderRadius: 14,
+          boxShadow: "0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)",
+          border: "1px solid rgba(0,0,0,0.07)",
+          pointerEvents: "auto",
+          scrollbarWidth: "none",
+        }}
+      >
 
-      {/* ── Stroke ── */}
-      <Section label="Stroke">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {STROKE_COLORS.map((c) => (
-            <ColorDot key={c} bg={c} active={color === c} onClick={() => setColor(c)} />
-          ))}
-          {/* Custom color picker */}
-          <label
-            className="relative w-7 h-7 rounded-lg overflow-hidden cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-            title="Custom color"
-            style={{ border: "1.5px solid rgba(0,0,0,0.12)" }}
-          >
-            <div
-              className="w-full h-full"
-              style={{
-                background: STROKE_COLORS.includes(color)
-                  ? "conic-gradient(#e03131, #f08c00, #2f9e44, #1971c2, #ae3ec9, #e03131)"
-                  : color,
-              }}
-            />
-            <input
-              type="color"
-              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+        {/* ── Stroke ── */}
+        <Section label="Stroke">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {STROKE_COLORS.map((c, i) => (
+              <Swatch
+                key={i}
+                bg={c}
+                active={color === c && STROKE_COLORS.includes(color)}
+                onClick={() => setColor(c)}
+              />
+            ))}
+            {/* Custom color picker */}
+            <ColorPickerSwatch
               value={color}
-              onChange={(e) => setColor(e.target.value)}
+              onChange={setColor}
+              isCustom={!STROKE_COLORS.includes(color)}
             />
-            {!STROKE_COLORS.includes(color) && (
-              <div
-                className="absolute inset-0 rounded-lg"
-                style={{ border: "2.5px solid #fff", boxShadow: `0 0 0 2px ${color}` }}
+          </div>
+        </Section>
+
+        <Hr />
+
+        {/* ── Background ── */}
+        <Section label="Background">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {BG_COLORS.map((c, i) => (
+              <Swatch
+                key={i}
+                bg={c.checker ? "transparent" : c.value}
+                checker={c.checker}
+                active={fillColor === c.value}
+                onClick={() => setFillColor(c.value)}
+                bordered={c.checker}
               />
-            )}
-          </label>
-        </div>
-      </Section>
-
-      <Divider />
-
-      {/* ── Background ── */}
-      <Section label="Background">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {FILL_COLORS.map((f, i) => (
-            <ColorDot
-              key={i}
-              bg={f.checker ? "transparent" : f.value}
-              checker={f.checker}
-              active={fillColor === f.value}
-              onClick={() => setFillColor(f.value)}
-              bordered={f.checker}
+            ))}
+            {/* Custom background color */}
+            <ColorPickerSwatch
+              value={fillColor || "#ffffff"}
+              onChange={setFillColor}
+              isCustom={fillColor !== "" && !BG_COLORS.some(b => b.value === fillColor)}
             />
-          ))}
-        </div>
-      </Section>
+          </div>
+        </Section>
 
-      <Divider />
+        <Hr />
 
-      {/* ── Stroke width ── */}
-      <Section label="Stroke Width">
-        <div className="flex gap-2">
-          {[
-            { val: 1, h: 1.5 },
-            { val: 2, h: 3   },
-            { val: 3, h: 5   },
-          ].map((s) => (
-            <OptionBtn
-              key={s.val}
-              active={strokeSize === s.val}
-              onClick={() => setStrokeSize(s.val)}
-              title={`Width ${s.val}`}
-            >
-              <div
-                className="rounded-full"
-                style={{
-                  width: 32,
-                  height: s.h,
-                  background: strokeSize === s.val ? "#6c63ff" : "#888",
-                }}
-              />
-            </OptionBtn>
-          ))}
-        </div>
-      </Section>
-
-      <Divider />
-
-      {/* ── Stroke style ── */}
-      <Section label="Stroke Style">
-        <div className="flex gap-2">
-          {([
-            {
-              val: "solid",
-              el: <svg width="32" height="10" viewBox="0 0 32 10"><line x1="1" y1="5" x2="31" y2="5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>,
-            },
-            {
-              val: "dashed",
-              el: <svg width="32" height="10" viewBox="0 0 32 10"><line x1="1" y1="5" x2="31" y2="5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray="6 3" /></svg>,
-            },
-            {
-              val: "dotted",
-              el: <svg width="32" height="10" viewBox="0 0 32 10"><line x1="1" y1="5" x2="31" y2="5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="1 4" /></svg>,
-            },
-          ] as { val: StrokeStyle; el: React.ReactNode }[]).map((s) => (
-            <OptionBtn
-              key={s.val}
-              active={strokeStyle === s.val}
-              onClick={() => setStrokeStyle(s.val)}
-              title={s.val}
-            >
-              {s.el}
-            </OptionBtn>
-          ))}
-        </div>
-      </Section>
-
-      <Divider />
-
-      {/* ── Sloppiness ── */}
-      <Section label="Sloppiness">
-        <div className="flex gap-2">
-          {[
-            { val: 0, path: "M3,10 L27,6",                       label: "Architect"  },
-            { val: 1, path: "M3,10 C9,7 14,12 20,8 C24,5 27,9 29,8", label: "Artist"    },
-            { val: 2, path: "M3,9 C7,5 12,13 17,8 C21,4 25,11 29,8", label: "Cartoonist"},
-          ].map((r) => (
-            <OptionBtn
-              key={r.val}
-              active={roughness === r.val}
-              onClick={() => setRoughness(r.val)}
-              title={r.label}
-            >
-              <svg width="32" height="16" viewBox="0 0 32 16" fill="none"
-                stroke={roughness === r.val ? "#6c63ff" : "#888"} strokeWidth="1.8" strokeLinecap="round">
-                <path d={r.path} />
+        {/* ── Fill style ── */}
+        <Section label="Fill">
+          <div className="flex gap-2">
+            {/* Hatch */}
+            <OptionBtn active={false} onClick={() => {}} title="Hatch">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <rect x="2" y="2" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.4"/>
+                <line x1="6" y1="16" x2="16" y2="6" stroke="currentColor" strokeWidth="1.2"/>
+                <line x1="2" y1="16" x2="12" y2="6" stroke="currentColor" strokeWidth="1.2"/>
+                <line x1="10" y1="16" x2="20" y2="6" stroke="currentColor" strokeWidth="1.2"/>
               </svg>
             </OptionBtn>
-          ))}
-        </div>
-      </Section>
-
-      <Divider />
-
-      {/* ── Edges ── */}
-      <Section label="Edges">
-        <div className="flex gap-2">
-          <OptionBtn active={edgeStyle === "sharp"} onClick={() => setEdgeStyle("sharp")} title="Sharp edges">
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"
-              stroke={edgeStyle === "sharp" ? "#6c63ff" : "#888"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="16" height="16" rx="0" />
-            </svg>
-          </OptionBtn>
-          <OptionBtn active={edgeStyle === "round"} onClick={() => setEdgeStyle("round")} title="Round edges">
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"
-              stroke={edgeStyle === "round" ? "#6c63ff" : "#888"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="16" height="16" rx="5" />
-            </svg>
-          </OptionBtn>
-        </div>
-      </Section>
-
-      <Divider />
-
-      {/* ── Opacity ── */}
-      <Section label="Opacity">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[#999] w-3 flex-shrink-0">0</span>
-          <input
-            type="range"
-            min={0} max={100} step={1}
-            value={opacity}
-            onChange={(e) => setOpacity(Number(e.target.value))}
-            className="flex-1 accent-[#6c63ff] h-1 cursor-pointer"
-          />
-          <span className="text-[10px] text-[#999] w-6 text-right flex-shrink-0">{opacity}</span>
-        </div>
-      </Section>
-
-      <Divider />
-
-      {/* ── Layers ── */}
-      <Section label="Layers">
-        <div className="flex gap-1.5">
-          {([
-            { action: "toBottom", Icon: IcoToBottom, title: "Send to back"   },
-            { action: "down",     Icon: IcoDown,     title: "Send backward"  },
-            { action: "up",       Icon: IcoUp,       title: "Bring forward"  },
-            { action: "toTop",    Icon: IcoToTop,    title: "Bring to front" },
-          ] as { action: "toBottom"|"down"|"up"|"toTop"; Icon: React.FC; title: string }[]).map((b) => (
-            <button
-              key={b.action}
-              title={b.title}
-              onClick={() => onLayerChange?.(b.action)}
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-[#666] hover:bg-black/06 hover:text-[#1a1a2e] transition-colors"
+            {/* Cross hatch */}
+            <OptionBtn active={false} onClick={() => {}} title="Cross hatch">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <rect x="2" y="2" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.4"/>
+                <line x1="6" y1="16" x2="16" y2="6" stroke="currentColor" strokeWidth="1.2"/>
+                <line x1="2" y1="16" x2="12" y2="6" stroke="currentColor" strokeWidth="1.2"/>
+                <line x1="6" y1="6" x2="16" y2="16" stroke="currentColor" strokeWidth="1.2"/>
+                <line x1="2" y1="6" x2="12" y2="16" stroke="currentColor" strokeWidth="1.2"/>
+              </svg>
+            </OptionBtn>
+            {/* Solid */}
+            <OptionBtn
+              active={fillColor !== "" && BG_COLORS.some(b => b.value === fillColor)}
+              onClick={() => setFillColor(fillColor || "#a5d8ff")}
+              title="Solid fill"
             >
-              <b.Icon />
-            </button>
-          ))}
-        </div>
-      </Section>
+              <svg width="22" height="22" viewBox="0 0 22 22">
+                <rect x="2" y="2" width="18" height="18" rx="2"
+                  fill={fillColor || "#a5d8ff"}
+                  stroke="currentColor" strokeWidth="1.4"/>
+              </svg>
+            </OptionBtn>
+          </div>
+        </Section>
 
+        <Hr />
+
+        {/* ── Stroke width ── */}
+        <Section label="Stroke width">
+          <div className="flex gap-2">
+            {[
+              { val: 1, strokeW: 1.2 },
+              { val: 2, strokeW: 2.5 },
+              { val: 3, strokeW: 4.5 },
+            ].map(s => (
+              <OptionBtn
+                key={s.val}
+                active={strokeSize === s.val}
+                onClick={() => setStrokeSize(s.val)}
+                title={`Width ${s.val}`}
+              >
+                <svg width="28" height="12" viewBox="0 0 28 12">
+                  <line x1="2" y1="6" x2="26" y2="6"
+                    stroke="currentColor" strokeWidth={s.strokeW} strokeLinecap="round"/>
+                </svg>
+              </OptionBtn>
+            ))}
+          </div>
+        </Section>
+
+        <Hr />
+
+        {/* ── Stroke style ── */}
+        <Section label="Stroke style">
+          <div className="flex gap-2">
+            {([
+              { val: "solid",  da: undefined },
+              { val: "dashed", da: "6 3" },
+              { val: "dotted", da: "1.5 3.5" },
+            ] as { val: StrokeStyle; da?: string }[]).map(s => (
+              <OptionBtn
+                key={s.val}
+                active={strokeStyle === s.val}
+                onClick={() => setStrokeStyle(s.val)}
+                title={s.val}
+              >
+                <svg width="28" height="12" viewBox="0 0 28 12">
+                  <line
+                    x1="2" y1="6" x2="26" y2="6"
+                    stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"
+                    strokeDasharray={s.da}
+                  />
+                </svg>
+              </OptionBtn>
+            ))}
+          </div>
+        </Section>
+
+        <Hr />
+
+        {/* ── Sloppiness ── */}
+        <Section label="Sloppiness">
+          <div className="flex gap-2">
+            {[
+              { val: 0,   path: "M3,9 L25,7",                              title: "Architect"   },
+              { val: 1.5, path: "M3,10 C8,6 14,12 20,8 C23,5 25,8 26,7",  title: "Artist"      },
+              { val: 3,   path: "M3,9 C7,4 12,14 17,8 C21,3 24,12 26,8",  title: "Cartoonist"  },
+            ].map(r => (
+              <OptionBtn
+                key={r.val}
+                active={roughness === r.val}
+                onClick={() => setRoughness(r.val)}
+                title={r.title}
+              >
+                <svg width="28" height="16" viewBox="0 0 28 16" fill="none"
+                  stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <path d={r.path} />
+                </svg>
+              </OptionBtn>
+            ))}
+          </div>
+        </Section>
+
+        <Hr />
+
+        {/* ── Edges ── */}
+        <Section label="Edges">
+          <div className="flex gap-2">
+            <OptionBtn
+              active={edgeStyle === "sharp"}
+              onClick={() => setEdgeStyle("sharp")}
+              title="Sharp"
+            >
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none"
+                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="miter">
+                <rect x="3" y="3" width="16" height="16" rx="0"/>
+              </svg>
+            </OptionBtn>
+            <OptionBtn
+              active={edgeStyle === "round"}
+              onClick={() => setEdgeStyle("round")}
+              title="Rounded"
+            >
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none"
+                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="16" height="16" rx="5"/>
+              </svg>
+            </OptionBtn>
+          </div>
+        </Section>
+
+        <Hr />
+
+        {/* ── Opacity ── */}
+        <Section label="Opacity">
+          <input
+            type="range" min={0} max={100} step={1} value={opacity}
+            onChange={e => setOpacity(Number(e.target.value))}
+            className="w-full cursor-pointer accent-[#6c63ff]"
+            style={{ height: 4 }}
+          />
+          <div className="flex justify-between mt-1">
+            <span className="text-[10px] text-[#aaa]">0</span>
+            <span className="text-[10px] text-[#aaa]">{opacity}</span>
+          </div>
+        </Section>
+
+        <Hr />
+
+        {/* ── Layers ── */}
+        <Section label="Layers">
+          <div className="flex gap-1">
+            {(["toBottom", "down", "up", "toTop"] as const).map(action => {
+              const Icon = LayerIcons[action];
+              const titles = { toBottom: "Send to back", down: "Send backward", up: "Bring forward", toTop: "Bring to front" };
+              return (
+                <button
+                  key={action}
+                  title={titles[action]}
+                  onClick={() => onLayerChange?.(action)}
+                  className="flex-1 h-9 rounded-xl flex items-center justify-center text-[#666] hover:bg-black/06 hover:text-[#1a1a2e] transition-colors"
+                >
+                  <Icon />
+                </button>
+              );
+            })}
+          </div>
+        </Section>
+
+      </div>
     </div>
   );
 }
 
+// ── Sub-components ────────────────────────────────────────────────────────────
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="px-3.5 py-3">
-      <p className="text-[10px] font-semibold text-[#aaa] uppercase tracking-widest mb-2.5">{label}</p>
+      <p className="text-[11px] font-medium text-[#888] mb-2.5">{label}</p>
       {children}
     </div>
   );
 }
 
-function Divider() {
-  return <div className="mx-3.5 border-t border-black/[0.06]" />;
+function Hr() {
+  return <div className="mx-3.5" style={{ height: 1, background: "rgba(0,0,0,0.06)" }} />;
 }
 
-function ColorDot({
+function Swatch({
   bg, active, onClick, checker, bordered,
 }: {
-  bg: string; active: boolean; onClick: () => void; checker?: boolean; bordered?: boolean;
+  bg: string; active: boolean; onClick: () => void;
+  checker?: boolean; bordered?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className="w-7 h-7 rounded-lg flex-shrink-0 transition-all duration-120 hover:scale-110 overflow-hidden relative"
+      className="w-7 h-7 rounded-lg flex-shrink-0 transition-all hover:scale-110 relative overflow-hidden"
       style={{
         background: checker
-          ? `repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%) 0 0 / 8px 8px`
+          ? "repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%) 0 0 / 10px 10px"
           : bg,
         boxShadow: active
-          ? `0 0 0 2px #fff, 0 0 0 3.5px #6c63ff`
-          : "none",
-        border: bordered && !active
-          ? "1.5px solid rgba(0,0,0,0.14)"
-          : active ? "none" : "1.5px solid transparent",
-        transform: active ? "scale(1.15)" : "scale(1)",
+          ? "0 0 0 2px #fff, 0 0 0 3.5px #6c63ff"
+          : bordered
+          ? "0 0 0 1.5px rgba(0,0,0,0.14)"
+          : "0 0 0 1.5px rgba(0,0,0,0.08)",
+        transform: active ? "scale(1.12)" : "scale(1)",
+        transition: "all 130ms ease",
       }}
     />
+  );
+}
+
+function ColorPickerSwatch({
+  value, onChange, isCustom,
+}: {
+  value: string; onChange: (c: string) => void; isCustom: boolean;
+}) {
+  return (
+    <label
+      className="w-7 h-7 rounded-lg flex-shrink-0 relative overflow-hidden cursor-pointer hover:scale-110 transition-transform"
+      title="Custom color"
+      style={{
+        boxShadow: isCustom
+          ? "0 0 0 2px #fff, 0 0 0 3.5px #6c63ff"
+          : "0 0 0 1.5px rgba(0,0,0,0.12)",
+        transform: isCustom ? "scale(1.12)" : "scale(1)",
+        transition: "all 130ms ease",
+      }}
+    >
+      <div
+        className="w-full h-full"
+        style={{
+          background: isCustom
+            ? value
+            : "conic-gradient(#e03131 0deg, #f08c00 60deg, #2f9e44 120deg, #1971c2 180deg, #ae3ec9 240deg, #e03131 300deg)",
+        }}
+      />
+      <input
+        type="color"
+        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+      />
+    </label>
   );
 }
 
@@ -324,12 +391,13 @@ function OptionBtn({
     <button
       title={title}
       onClick={onClick}
-      className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-120"
+      className="flex-1 h-9 rounded-xl flex items-center justify-center transition-all"
       style={{
-        background: active ? "rgba(108,99,255,0.10)" : "transparent",
+        background: active ? "rgba(108,99,255,0.12)" : "transparent",
         border: active
-          ? "1.5px solid rgba(108,99,255,0.35)"
-          : "1.5px solid rgba(0,0,0,0.09)",
+          ? "1.5px solid rgba(108,99,255,0.4)"
+          : "1.5px solid rgba(0,0,0,0.08)",
+        color: active ? "#6c63ff" : "#555",
       }}
     >
       {children}
