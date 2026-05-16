@@ -71,7 +71,7 @@ export function ShortcutsModal() {
       <button
         onClick={() => setOpen(true)}
         title="Keyboard shortcuts (?)"
-        className="fixed bottom-5 right-5 z-[200] w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-semibold transition-all hover:scale-110"
+        className="fixed bottom-5 right-5 z-[200] w-8 h-8 rounded-xl flex items-center justify-center text-[12px] font-semibold transition-all hover:scale-105"
         style={{
           background: "#fff",
           border: "1px solid rgba(0,0,0,0.12)",

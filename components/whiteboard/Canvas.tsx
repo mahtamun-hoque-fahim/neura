@@ -255,6 +255,13 @@ export function Canvas() {
     ctx.restore();
   }, []);
 
+  // ── Update zoom display ──────────────────────────────────────────────────
+  const updateZoomDisplay = (scale: number) => {
+    const el = document.getElementById("zoom-display");
+    if (el) el.textContent = `${Math.round(scale * 100)}%`;
+  };
+
+  // Also update on wheel zoom
   // ── Update DOM overlays ───────────────────────────────────────────────────
   const updateDomOverlays = useCallback(() => {
     const els = elementsRef.current;
@@ -383,6 +390,7 @@ export function Canvas() {
         vpRef.current = { ...vp, x: vp.x - e.deltaX, y: vp.y - e.deltaY };
       }
       redrawStatic();
+      updateZoomDisplay(vpRef.current.scale);
     };
     canvas.addEventListener("wheel", onWheel, { passive: false });
     return () => canvas.removeEventListener("wheel", onWheel);
@@ -821,9 +829,28 @@ export function Canvas() {
       const a = document.createElement("a");
       a.download = `neura-${Date.now()}.png`; a.href = tmp.toDataURL(); a.click();
     };
-    const onZoomReset = () => { vpRef.current = { x: 0, y: 0, scale: 1 }; redrawStatic(); };
+    const onZoomReset = () => {
+      vpRef.current = { x: 0, y: 0, scale: 1 };
+      redrawStatic();
+      updateZoomDisplay(1);
+    };
+    const onZoom = (e: Event) => {
+      const factor = (e as CustomEvent<number>).detail;
+      const vp = vpRef.current;
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, vp.scale * factor));
+      const ratio = newScale / vp.scale;
+      vpRef.current = { scale: newScale, x: cx - ratio * (cx - vp.x), y: cy - ratio * (cy - vp.y) };
+      redrawStatic();
+      updateZoomDisplay(newScale);
+    };
     window.addEventListener("neura:zoom-reset", onZoomReset);
-    return () => window.removeEventListener("neura:zoom-reset", onZoomReset);
+    window.addEventListener("neura:zoom", onZoom);
+    return () => {
+      window.removeEventListener("neura:zoom-reset", onZoomReset);
+      window.removeEventListener("neura:zoom", onZoom);
+    };
   }, [clearAll, redrawStatic]);
 
   const commitText = () => {
@@ -835,7 +862,7 @@ export function Canvas() {
   };
 
   const textScreenPos = textPos ? worldToScreen(textPos.wx, textPos.wy, vpRef.current) : null;
-  const propsPanelWidth = 200;
+  const propsPanelWidth = 196;
   const engSidebarWidth = mode === "engineering" && sidebarOpen ? 220 : 0;
   const sidebarWidth = propsPanelWidth;
 

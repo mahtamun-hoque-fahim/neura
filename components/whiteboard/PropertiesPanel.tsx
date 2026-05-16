@@ -65,7 +65,7 @@ export function PropertiesPanel({
       className="fixed left-0 top-0 bottom-0 z-[89] flex flex-col select-none overflow-y-auto"
       style={{
         width: 196,
-        paddingTop: 56,
+        paddingTop: 52,
         paddingBottom: 80,
         background: "#fff",
         borderRight: "1px solid rgba(0,0,0,0.08)",

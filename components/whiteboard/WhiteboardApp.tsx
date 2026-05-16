@@ -9,6 +9,7 @@ import { LiveCursors }       from "./LiveCursors";
 import { EngineeringSidebar } from "./EngineeringSidebar";
 import { PropertiesPanel }   from "./PropertiesPanel";
 import { ShortcutsModal }   from "./ShortcutsModal";
+import { BottomBar }       from "./BottomBar";
 import { useCanvasStore }    from "@/lib/store";
 
 function UndoRedoBridge() {
@@ -74,6 +75,7 @@ function Board({ roomId, isMP }: { roomId: string; isMP: boolean }) {
         </div>
       )}
       <ShortcutsModal />
+      <BottomBar />
     </div>
   );
 }
